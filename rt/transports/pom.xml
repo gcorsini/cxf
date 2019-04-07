@@ -40,5 +40,6 @@
         <module>jms</module>
         <module>udp</module>
         <module>websocket</module>
+        <module>http-tomcat</module>
     </modules>
 </project>
