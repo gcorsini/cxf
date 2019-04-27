@@ -24,6 +24,6 @@ import javax.jws.WebService;
 @WebService
 public interface DummyInterface {
     @WebMethod
-    String echo(String what);
+    String echoTomcat(String what);
 
 }

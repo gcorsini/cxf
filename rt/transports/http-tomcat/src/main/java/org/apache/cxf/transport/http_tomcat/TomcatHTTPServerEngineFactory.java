@@ -80,6 +80,20 @@ public class TomcatHTTPServerEngineFactory {
      */
     private boolean configFinalized;
 
+    public TomcatHTTPServerEngineFactory() {
+        // Empty
+    }
+    public TomcatHTTPServerEngineFactory(Bus b) {
+        setBus(b);
+    }
+    public TomcatHTTPServerEngineFactory(Bus b,
+                                        Map<String, TLSServerParameters> tls,
+                                        Map<String, ThreadingParameters> threading) {
+        tlsParametersMap.putAll(tls);
+        threadingParametersMap.putAll(threading);
+        setBus(b);
+    }
+
     @Resource(name = "cxf")
     public final void setBus(Bus bus) {
         this.bus = bus;
@@ -94,15 +108,15 @@ public class TomcatHTTPServerEngineFactory {
 
     private class TomcatBusLifeCycleListener implements BusLifeCycleListener {
         public void initComplete() {
-            TomcatBusLifeCycleListener.this.initComplete();
+            TomcatHTTPServerEngineFactory.this.initComplete();
         }
 
         public void preShutdown() {
-            TomcatBusLifeCycleListener.this.preShutdown();
+            TomcatHTTPServerEngineFactory.this.preShutdown();
         }
 
         public void postShutdown() {
-            TomcatBusLifeCycleListener.this.postShutdown();
+            TomcatHTTPServerEngineFactory.this.postShutdown();
         }
     }
 
@@ -144,7 +158,7 @@ public class TomcatHTTPServerEngineFactory {
         for (TomcatHTTPServerEngine engine : enginesList) {
             if (engine.getPort() == FALLBACK_THREADING_PARAMS_KEY) {
                 // todo investigate what to write here
-//                fallbackThreadingParameters = engine.getThreadingParameters();
+                fallbackThreadingParameters = engine.getThreadingParameters();
             }
             portMap.putIfAbsent(engine.getPort(), engine);
         }
@@ -221,6 +235,12 @@ public class TomcatHTTPServerEngineFactory {
         LOG.fine("Creating Tomcat HTTP Server Engine for port " + port + ".");
         TomcatHTTPServerEngine ref = getOrCreate(this, host, port, null);
         // checking the protocol
+
+        TLSServerParameters tlsParameters = null;
+//        if (id != null && tlsParametersMap != null && tlsParametersMap.containsKey(id)) {
+//            tlsParameters = tlsParametersMap.get(id);
+//        }
+
         if (!protocol.equals(ref.getProtocol())) {
             throw new IOException("Protocol mismatch for port " + port + ": "
                     + "engine's protocol is " + ref.getProtocol()
@@ -257,7 +277,7 @@ public class TomcatHTTPServerEngineFactory {
     public static synchronized void destroyForPort(int port) {
         TomcatHTTPServerEngine ref = portMap.remove(port);
         if (ref != null) {
-            LOG.fine("Stopping Jetty HTTP Server Engine on port " + port + ".");
+            LOG.fine("Stopping Tomcat HTTP Server Engine on port " + port + ".");
             try {
                 ref.stop();
             } catch (Exception e) {
@@ -291,5 +311,7 @@ public class TomcatHTTPServerEngineFactory {
         // just let server registry to call the server stop first
     }
 
-
+    public void setThreadingParametersMap(Map<String, ThreadingParameters> threadingParametersMap) {
+        this.threadingParametersMap = threadingParametersMap;
+    }
 }

@@ -17,16 +17,21 @@
  * under the License.
  */
 
-package org.apache.cxf.systest.http_tomcat;
+package org.apache.cxf.transport.http_tomcat.blueprint;
 
-import javax.jws.WebMethod;
-import javax.jws.WebService;
+import org.junit.Test;
 
-@WebService
-public class Dummy implements DummyInterface {
-    @WebMethod
-    public String echoTomcat(String what) {
-        return what;
+import static org.junit.Assert.assertNotNull;
+
+/**
+ *
+ */
+public class HTTPTomcatTransportNamespaceHandlerTest {
+    @Test
+    public void testGetSchemaLocation() {
+        HTTPTomcatTransportNamespaceHandler handler = new HTTPTomcatTransportNamespaceHandler();
+
+        assertNotNull(handler.getSchemaLocation("http://cxf.apache.org/transports/http-tomcat/configuration"));
     }
 
 }

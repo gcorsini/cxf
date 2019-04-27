@@ -137,12 +137,16 @@ public class TomcatHTTPServerEngine implements ServerEngine {
             try {
                 // create a new tomcat server instance if there is no server there
                 Tomcat tomcat = new Tomcat();
-//                Connector connector = new Connector("org.apache.coyote.http11.Http11NioProtocol");
-//                tomcat.getService().addConnector(connector);
+                Connector connector = new Connector("org.apache.coyote.http11.Http11NioProtocol");
+                connector.setPort(getPort());
 
-                int port = (getPort() >= 0) ? getPort() : 0;
+                // add connector to server
+                tomcat.getService().addConnector(connector);
+
+//                int port = (getPort() >= 0) ? getPort() : 0;
 //                connector.setPort(port);
-//                connector.getProtocolHandler();
+                connector.getProtocolHandler();
+//                tomcat.
 
 
 //                Context context = tomcat.addContext("", docBase.getAbsolutePath());
@@ -246,16 +250,6 @@ public class TomcatHTTPServerEngine implements ServerEngine {
     }
 
     private void prepareContext(Host host, Tomcat tomcat) {
-
-//        WebappLoader loader = new WebappLoader(context.getParentClassLoader());
-//        loader.setLoaderClass(TomcatEmbeddedWebappClassLoader.class.getName());
-//        loader.setDelegate(true);
-//        context.setLoader(loader);
-//        Tomcat.addServlet(context, "cxfServlet", new CXFNonSpringJaxrsServlet());
-//        Tomcat.addServlet(context, "hello", new HelloServlet());
-
-//        addDefaultServlet(context);
-
         File docBase = new File(System.getProperty("java.io.tmpdir"));
         Context context = tomcat.addContext("", docBase.getAbsolutePath());
 
@@ -446,6 +440,17 @@ public class TomcatHTTPServerEngine implements ServerEngine {
         }
     }
 
+    public void setHandlers(List<Handler> handlers) {
+        this.handlers = handlers;
+    }
+
+    public String getHost() {
+        return host;
+    }
+
+    public void setHost(String host) {
+        this.host = host;
+    }
 
     public int getPort() {
         return this.port;
@@ -512,5 +517,9 @@ public class TomcatHTTPServerEngine implements ServerEngine {
      */
     public ThreadingParameters getThreadingParameters() {
         return threadingParameters;
+    }
+
+    public List<Handler> getHandlers() {
+        return handlers;
     }
 }

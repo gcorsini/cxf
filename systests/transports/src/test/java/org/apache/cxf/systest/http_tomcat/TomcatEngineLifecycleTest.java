@@ -21,17 +21,14 @@ package org.apache.cxf.systest.http_tomcat;
 import org.apache.catalina.servlets.DefaultServlet;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.cxf.Bus;
+import org.apache.cxf.bus.managers.DestinationFactoryManagerImpl;
 import org.apache.cxf.endpoint.ServerImpl;
 import org.apache.cxf.endpoint.ServerRegistry;
 import org.apache.cxf.helpers.IOUtils;
-import org.apache.cxf.systest.http_jetty.DummyInterface;
 import org.apache.cxf.testutil.common.TestUtil;
-import org.apache.cxf.transport.http_jetty.JettyHTTPDestination;
-import org.apache.cxf.transport.http_jetty.JettyHTTPServerEngine;
+import org.apache.cxf.transport.http_tomcat.TomcatDestinationFactory;
 import org.apache.cxf.transport.http_tomcat.TomcatHTTPDestination;
 import org.apache.cxf.transport.http_tomcat.TomcatHTTPServerEngine;
-import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.webapp.WebAppContext;
 import org.junit.Test;
 import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
 import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
@@ -52,11 +49,11 @@ import static org.junit.Assert.*;
 
 /**
  * This class tests starting up and shutting down the embedded server when there
- * is extra jetty configuration.
+ * is extra tomcat configuration.
  */
-public class EngineLifecycleTest {
-    private static final String PORT1 = TestUtil.getPortNumber(EngineLifecycleTest.class, 1);
-    private static final String PORT2 = TestUtil.getPortNumber(EngineLifecycleTest.class, 2);
+public class TomcatEngineLifecycleTest {
+    private static final String PORT1 = TestUtil.getPortNumber(TomcatEngineLifecycleTest.class, 1);
+    private static final String PORT2 = TestUtil.getPortNumber(TomcatEngineLifecycleTest.class, 2);
     private GenericApplicationContext applicationContext;
 
     @Test
@@ -110,30 +107,7 @@ public class EngineLifecycleTest {
         XmlBeanDefinitionReader reader = new XmlBeanDefinitionReader(applicationContext);
         reader.loadBeanDefinitions(
                 new ClassPathResource("META-INF/cxf/cxf.xml"),
-                new ClassPathResource("cxf.xml", getClass()),
-                new ClassPathResource("tomcat-engine.xml", getClass()),
-                new ClassPathResource("server-lifecycle-beans.xml", getClass()));
-
-        // bring in some property values from a Properties file
-        PropertyPlaceholderConfigurer cfg = new PropertyPlaceholderConfigurer();
-        Properties properties = new Properties();
-        properties.setProperty("staticResourceURL", getClass().getPackage().getName().replace('.', '/'));
-        cfg.setProperties(properties);
-        // now actually do the replacement
-        cfg.postProcessBeanFactory(applicationContext.getBeanFactory());
-        applicationContext.refresh();
-    }
-
-    private void setUpBusForTomcat() throws Exception {
-        verifyNoServer(PORT2);
-        verifyNoServer(PORT1);
-
-        applicationContext = new GenericApplicationContext();
-
-        XmlBeanDefinitionReader reader = new XmlBeanDefinitionReader(applicationContext);
-        reader.loadBeanDefinitions(
-                new ClassPathResource("META-INF/cxf/cxf.xml"),
-                new ClassPathResource("cxf.xml", getClass()),
+                new ClassPathResource("cxf-tomcat.xml", getClass()),
                 new ClassPathResource("tomcat-engine.xml", getClass()),
                 new ClassPathResource("server-lifecycle-beans.xml", getClass()));
 
@@ -149,13 +123,13 @@ public class EngineLifecycleTest {
 
     private void invokeService() {
         DummyInterface client = (DummyInterface) applicationContext.getBean("dummy-client");
-        String hello_world = client.echo("hello world");
+        String hello_world = client.echoTomcat("hello world");
         assertEquals("We should get out put from this client", "hello world", hello_world);
     }
 
     private void invokeService8801() {
         DummyInterface client = (DummyInterface) applicationContext.getBean("dummy-client-8801");
-        String hello_world = client.echo("hello world");
+        String hello_world = client.echoTomcat("hello world");
         assertEquals("We should get out put from this client", "hello world", hello_world);
     }
 
@@ -174,7 +148,7 @@ public class EngineLifecycleTest {
         assertNotNull("Test doc can not be read", response);
 
         String html;
-        try (InputStream htmlFile = EngineLifecycleTest.class.getResourceAsStream("test.html")) {
+        try (InputStream htmlFile = TomcatEngineLifecycleTest.class.getResourceAsStream("test.html")) {
             byte[] buf = new byte[htmlFile.available()];
             htmlFile.read(buf);
             html = new String(buf);

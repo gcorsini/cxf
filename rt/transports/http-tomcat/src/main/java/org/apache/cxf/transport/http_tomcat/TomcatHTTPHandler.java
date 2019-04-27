@@ -1,16 +1,16 @@
 package org.apache.cxf.transport.http_tomcat;
 
+import org.apache.catalina.Valve;
 import org.apache.catalina.connector.RequestFacade;
 import org.apache.cxf.Bus;
 import org.apache.cxf.transport.http.HttpUrlUtil;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
+import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-public class TomcatHTTPHandler {
+public class TomcatHTTPHandler implements Filter {
 
     private static final String METHOD_TRACE = "TRACE";
 
@@ -72,4 +72,18 @@ public class TomcatHTTPHandler {
         return tomcatHTTPDestination != null ? tomcatHTTPDestination.getBus() : bus;
     }
 
+    @Override
+    public void init(FilterConfig filterConfig) throws ServletException {
+        System.out.println("Im in init method");
+    }
+
+    @Override
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+        System.out.println("Im in filter method");
+    }
+
+    @Override
+    public void destroy() {
+        System.out.println("Im in destroy method");
+    }
 }

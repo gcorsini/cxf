@@ -1,0 +1,3 @@
+org.apache.cxf.transport.http_tomcat.TomcatDestinationFactory::true
+org.apache.cxf.transport.http_tomcat.TomcatHTTPServerEngineFactory::true
+org.apache.cxf.transport.http_tomcat.continuations.TomcatContinuationProviderFactory:org.apache.cxf.transport.http.ContinuationProviderFactory:true

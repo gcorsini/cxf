@@ -19,7 +19,6 @@
 package org.apache.cxf.transport.http_tomcat;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.util.logging.Level;
@@ -30,6 +29,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.cxf.Bus;
+import org.apache.cxf.BusFactory;
+import org.apache.cxf.common.classloader.ClassLoaderUtils;
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.configuration.jsse.TLSServerParameters;
 import org.apache.cxf.configuration.security.CertificateConstraintsType;
@@ -38,6 +39,7 @@ import org.apache.cxf.service.model.EndpointInfo;
 import org.apache.cxf.transport.http.DestinationRegistry;
 import org.apache.cxf.transport.https.CertConstraintsJaxBUtils;
 import org.apache.cxf.transport.servlet.ServletDestination;
+import org.apache.cxf.transports.http.configuration.HTTPServerPolicy;
 
 public class TomcatHTTPDestination extends ServletDestination {
 
@@ -49,6 +51,7 @@ public class TomcatHTTPDestination extends ServletDestination {
     protected URL nurl;
     protected ClassLoader loader;
     protected ServletContext servletContext;
+    protected TomcatHTTPHandler handler;
     /**
      * This variable signifies that finalizeConfig() has been called.
      * It gets called after this object has been spring configured.
@@ -132,8 +135,8 @@ public class TomcatHTTPDestination extends ServletDestination {
         LOG.log(Level.FINE, "Activating receipt of incoming messages");
         // todo implement me
         if (engine != null) {
-//            TomcatHTTPHandler thd = createTomcatHTTPHandler(this, contextMatchOnExact());
-//            engine.addServant(nurl, thd);
+            TomcatHTTPHandler thd = createTomcatHTTPHandler(this, contextMatchOnExact());
+            engine.addServant(nurl, thd);
         }
     }
 
@@ -145,9 +148,14 @@ public class TomcatHTTPDestination extends ServletDestination {
         LOG.log(Level.FINE, "Deactivating receipt of incoming messages");
         // todo implement me
         if (engine != null) {
-//            engine.removeServant(nurl);
+            engine.removeServant(nurl);
         }
-//        handler = null;
+        handler = null;
+    }
+
+    protected TomcatHTTPHandler createTomcatHTTPHandler(TomcatHTTPDestination thd,
+                                                      boolean cmExact) {
+        return new TomcatHTTPHandler(thd, cmExact);
     }
 
     protected void doService(HttpServletRequest req,
@@ -161,26 +169,59 @@ public class TomcatHTTPDestination extends ServletDestination {
         if (context == null) {
             context = servletContext;
         }
+//        Request baseRequest = (req instanceof Request)
+//                ? (Request)req : getCurrentRequest();
+
+        HTTPServerPolicy sp = getServer();
+        if (sp.isSetRedirectURL()) {
+            resp.sendRedirect(sp.getRedirectURL());
+            resp.flushBuffer();
+            return;
+        }
+
+        // REVISIT: service on executor if associated with endpoint
+        ClassLoaderUtils.ClassLoaderHolder origLoader = null;
+        Bus origBus = BusFactory.getAndSetThreadDefaultBus(bus);
+        try {
+            if (loader != null) {
+                origLoader = ClassLoaderUtils.setThreadContextClassloader(loader);
+            }
+            invoke(null, context, req, resp);
+        } finally {
+            if (origBus != bus) {
+                BusFactory.setThreadDefaultBus(origBus);
+            }
+            if (origLoader != null) {
+                origLoader.reset();
+            }
+        }
+
     }
 
     protected void invokeComplete(final ServletContext context,
                                   final HttpServletRequest req,
                                   final HttpServletResponse resp,
                                   Message m) throws IOException {
-        // todo Complete me
         resp.flushBuffer();
         super.invokeComplete(context, req, resp, m);
     }
 
-    protected OutputStream flushHeaders(Message outMessage, boolean getStream) throws IOException {
-        OutputStream out = super.flushHeaders(outMessage, getStream);
-        return wrapOutput(out);
-    }
+//    protected OutputStream flushHeaders(Message outMessage, boolean getStream) throws IOException {
+//        OutputStream out = super.flushHeaders(outMessage, getStream);
+//        return wrapOutput(out);
+//    }
+//
+//    private OutputStream wrapOutput(OutputStream out) {
+//        try {
+//            if (out instanceof CoyoteOutputStream) {
+//                out = new TomcatOutputStream((CoyoteOutputStream)out);
+//            }
+//        } catch (Throwable t) {
+//            //ignore
+//        }
+//        return out;
+//    }
 
-    private OutputStream wrapOutput(OutputStream out) {
-        //todo Complete me
-        return null;
-    }
 
 
 
@@ -196,8 +237,101 @@ public class TomcatHTTPDestination extends ServletDestination {
 
     }
 
+//    private Request getCurrentRequest() {
+//        try {
+//             con = HttpConnection.getCurrentConnection();
+//
+//            HttpChannel channel = con.getHttpChannel();
+//            return channel.getRequest();
+//        } catch (Throwable t) {
+//            //
+//        }
+//        return null;
+//    }
+
     public TomcatHTTPServerEngine getEngine() {
         return engine;
     }
+
+
+//    static class TomcatOutputStream extends FilterOutputStream implements CopyingOutputStream {
+//        final CoyoteOutputStream out;
+//        boolean written;
+//        TomcatOutputStream(CoyoteOutputStream o) {
+//            super(o);
+//            out = o;
+//        }
+//
+//        private boolean sendContent(Class<?> type, InputStream c) throws IOException {
+//            try {
+//                out.write(c);
+//            } catch (Exception e) {
+//                return false;
+//            }
+//            return true;
+//        }
+//        @Override
+//        public int copyFrom(InputStream in) throws IOException {
+//            if (written) {
+//                return IOUtils.copy(in, out);
+//            }
+//            CountingInputStream c = new CountingInputStream(in);
+//            if (!sendContent(InputStream.class, c)
+//                    && !sendContent(Object.class, c)) {
+//                IOUtils.copy(c, out);
+//            }
+//            return c.getCount();
+//        }
+//        public void write(int b) throws IOException {
+//            written = true;
+//            out.write(b);
+//        }
+//        public void write(byte[] b, int off, int len) throws IOException {
+//            written = true;
+//            out.write(b, off, len);
+//        }
+//
+//        @Override
+//        public void close() throws IOException {
+//            // Avoid calling flush() here. It interferes with
+//            // content length calculation in the generator.
+//            out.close();
+//        }
+//    }
+//    static class CountingInputStream extends FilterInputStream {
+//        int count;
+//        CountingInputStream(InputStream in) {
+//            super(in);
+//        }
+//        public int getCount() {
+//            return count;
+//        }
+//
+//        @Override
+//        public int read() throws IOException {
+//            int i = super.read();
+//            if (i != -1) {
+//                ++count;
+//            }
+//            return i;
+//        }
+//        @Override
+//        public int read(byte[] b) throws IOException {
+//            int i = super.read(b);
+//            if (i != -1) {
+//                count += i;
+//            }
+//            return i;
+//        }
+//        @Override
+//        public int read(byte[] b, int off, int len) throws IOException {
+//            int i = super.read(b, off, len);
+//            if (i != -1) {
+//                count += i;
+//            }
+//            return i;
+//        }
+//    }
+
 }
 

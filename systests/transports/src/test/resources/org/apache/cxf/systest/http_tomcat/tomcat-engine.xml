@@ -21,30 +21,31 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xmlns:sec="http://cxf.apache.org/configuration/security"
     xmlns:http="http://cxf.apache.org/transports/http/configuration"
-    xmlns:httpj="http://cxf.apache.org/transports/http-jetty/configuration"
-    xsi:schemaLocation="http://cxf.apache.org/configuration/security http://cxf.apache.org/schemas/configuration/security.xsd http://cxf.apache.org/transports/http/configuration http://cxf.apache.org/schemas/configuration/http-conf.xsd http://cxf.apache.org/transports/http-jetty/configuration http://cxf.apache.org/schemas/configuration/http-jetty.xsd http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+    xmlns:httpt="http://cxf.apache.org/transports/http-tomcat/configuration"
+    xsi:schemaLocation="http://cxf.apache.org/configuration/security http://cxf.apache.org/schemas/configuration/security.xsd http://cxf.apache.org/transports/http/configuration http://cxf.apache.org/schemas/configuration/http-conf.xsd http://cxf.apache.org/transports/http-tomcat/configuration http://cxf.apache.org/schemas/configuration/http-tomcat.xsd http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
     <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer"/>
-    <httpj:engine-factory bus="cxf">
-        <httpj:engine port="${testutil.ports.EngineLifecycleTest.2}">
-            <httpj:handlers>
-                <bean class="org.eclipse.jetty.webapp.WebAppContext">
-                    <constructor-arg value="."/>
-                    <constructor-arg value="/jsunit"/>
-                </bean>
-                <bean class="org.eclipse.jetty.server.handler.ContextHandler">
-                    <property name="contextPath" value="/"/>
-                    <property name="handler">
-                        <bean class="org.eclipse.jetty.server.handler.ResourceHandler">
-                            <property name="baseResource">
-                                <bean class="org.eclipse.jetty.util.resource.Resource" factory-method="newClassPathResource">
-                                    <constructor-arg value="${staticResourceURL}"/>
-                                </bean>
-                            </property>
-                        </bean>
-                    </property>
-                </bean>
-                <bean class="org.eclipse.jetty.server.handler.DefaultHandler"/>
-            </httpj:handlers>
-        </httpj:engine>
-    </httpj:engine-factory>
+
+    <httpt:engine-factory bus="cxf">
+        <httpt:engine port="${testutil.ports.TomcatEngineLifecycleTest.2}">
+            <!--<httpt:handlers>-->
+                <!--&lt;!&ndash;<bean class="org.eclipse.jetty.webapp.WebAppContext">&ndash;&gt;-->
+                    <!--&lt;!&ndash;<constructor-arg value="."/>&ndash;&gt;-->
+                    <!--&lt;!&ndash;<constructor-arg value="/jsunit"/>&ndash;&gt;-->
+                <!--&lt;!&ndash;</bean>&ndash;&gt;-->
+                <!--&lt;!&ndash;<bean class="org.eclipse.jetty.server.handler.ContextHandler">&ndash;&gt;-->
+                    <!--&lt;!&ndash;<property name="contextPath" value="/"/>&ndash;&gt;-->
+                    <!--&lt;!&ndash;<property name="handler">&ndash;&gt;-->
+                        <!--&lt;!&ndash;<bean class="org.eclipse.jetty.server.handler.ResourceHandler">&ndash;&gt;-->
+                            <!--&lt;!&ndash;<property name="baseResource">&ndash;&gt;-->
+                                <!--&lt;!&ndash;<bean class="org.eclipse.jetty.util.resource.Resource" factory-method="newClassPathResource">&ndash;&gt;-->
+                                    <!--&lt;!&ndash;<constructor-arg value="${staticResourceURL}"/>&ndash;&gt;-->
+                                <!--&lt;!&ndash;</bean>&ndash;&gt;-->
+                            <!--&lt;!&ndash;</property>&ndash;&gt;-->
+                        <!--&lt;!&ndash;</bean>&ndash;&gt;-->
+                    <!--&lt;!&ndash;</property>&ndash;&gt;-->
+                <!--&lt;!&ndash;</bean>&ndash;&gt;-->
+                <!--&lt;!&ndash;<bean class="org.eclipse.jetty.server.handler.DefaultHandler"/>&ndash;&gt;-->
+            <!--</httpt:handlers>-->
+        </httpt:engine>
+    </httpt:engine-factory>
 </beans>

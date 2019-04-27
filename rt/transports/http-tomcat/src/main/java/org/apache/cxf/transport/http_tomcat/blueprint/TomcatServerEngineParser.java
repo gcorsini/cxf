@@ -16,17 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.cxf.transport.http_tomcat.blueprint;
 
-package org.apache.cxf.systest.http_tomcat;
+import org.apache.aries.blueprint.ParserContext;
+import org.apache.cxf.configuration.blueprint.AbstractBPBeanDefinitionParser;
+import org.osgi.service.blueprint.reflect.Metadata;
+import org.w3c.dom.Element;
 
-import javax.jws.WebMethod;
-import javax.jws.WebService;
+public class TomcatServerEngineParser extends AbstractBPBeanDefinitionParser {
 
-@WebService
-public class Dummy implements DummyInterface {
-    @WebMethod
-    public String echoTomcat(String what) {
-        return what;
+    public Metadata parse(Element element, ParserContext context) {
+        return null;
     }
-
 }

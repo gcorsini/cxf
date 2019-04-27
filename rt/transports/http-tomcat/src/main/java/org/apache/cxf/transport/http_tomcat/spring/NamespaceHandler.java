@@ -16,17 +16,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.cxf.transport.http_tomcat.spring;
 
-package org.apache.cxf.systest.http_tomcat;
+import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
 
-import javax.jws.WebMethod;
-import javax.jws.WebService;
-
-@WebService
-public class Dummy implements DummyInterface {
-    @WebMethod
-    public String echoTomcat(String what) {
-        return what;
+public class NamespaceHandler extends NamespaceHandlerSupport {
+    public void init() {
+        registerBeanDefinitionParser("engine-factory",
+                new TomcatHTTPServerEngineFactoryBeanDefinitionParser());
+        registerBeanDefinitionParser("engine",
+                                     new TomcatHTTPServerEngineBeanDefinitionParser());
     }
-
 }
