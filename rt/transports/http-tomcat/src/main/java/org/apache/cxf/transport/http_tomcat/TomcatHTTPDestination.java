@@ -85,6 +85,9 @@ public class TomcatHTTPDestination extends ServletDestination {
         if (serverEngineFactory == null) {
             return;
         }
+
+        nurl = new URL(getAddress(endpointInfo));
+
         engine = serverEngineFactory.retrieveTomcatHTTPServerEngine(nurl.getPort());
         if (engine == null) {
             engine = serverEngineFactory.
@@ -235,6 +238,10 @@ public class TomcatHTTPDestination extends ServletDestination {
 //            super.setupContinuation(inMessage, req, resp);
 //        }
 
+    }
+
+    protected String getAddress(EndpointInfo endpointInfo) {
+        return endpointInfo.getAddress();
     }
 
 //    private Request getCurrentRequest() {

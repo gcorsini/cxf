@@ -195,7 +195,7 @@ public class TomcatHTTPServerEngine implements ServerEngine {
             }
 
         } else {
-           // String contextName = HttpUriMapper.getContextName(url.getPath());
+//            String contextName = HttpUriMapper.getContextName(url.getPath());
 //            try {
 //                servletContext = buildServletContext(contextName);
 //            } catch (ServletException e) {
