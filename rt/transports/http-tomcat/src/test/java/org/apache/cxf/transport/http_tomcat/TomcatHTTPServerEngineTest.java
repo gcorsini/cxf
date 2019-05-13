@@ -121,14 +121,21 @@ public class TomcatHTTPServerEngineTest {
         serverEngine.setMaxIdleTime(30000);
         urlStr = "http://localhost:" + "8080" + "/hello/test";
         urlStr2 = "http://localhost:8080/my-servlet/";
+        urlStr3 = "http://localhost:8080/tomcat-servlet/";
         serverEngine.addServant(new URL(urlStr), new TomcatHTTPTestHandler("a123123", true));
 //        serverEngine.addServant("http://localhost:8080");
         String response = null;
+        response = getResponse(urlStr3);
+        System.out.println(response);
+        assertEquals("The tomcat failed to query tomcat-servlet", response, "inside tomcat servlet ");
         response = getResponse(urlStr2);
         System.out.println(response);
+        assertEquals("The tomcat failed to query my-servlet", response, "inside hello servlet ");
         response = getResponse(urlStr);
         System.out.println(response);
+        assertEquals("The tomcat http handler did not take effect", response, "inside hello second servlet");
 
+        // todo add more assertions
         Thread.sleep(1000);
         serverEngine.stop();
 

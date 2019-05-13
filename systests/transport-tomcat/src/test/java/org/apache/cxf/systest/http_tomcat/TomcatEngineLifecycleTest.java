@@ -67,7 +67,7 @@ public class TomcatEngineLifecycleTest {
         TomcatHTTPServerEngine e = (TomcatHTTPServerEngine) jhd.getEngine();
         Tomcat server = e.getServer();
 
-        server.addServlet("/bloop", "defaultServlet", new DefaultServlet());
+        server.addServlet("/bloop", "default", new DefaultServlet());
 //        for (Handler h : server.getChildHandlersByClass(WebAppContext.class)) {
 //            WebAppContext wac = (WebAppContext) h;
 //            if ("/jsunit".equals(wac.getContextPath())) {

@@ -24,6 +24,7 @@ import org.apache.catalina.core.StandardContext;
 import org.apache.catalina.loader.WebappLoader;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.coyote.AbstractProtocol;
+import org.apache.coyote.http11.Http11NioProtocol;
 import org.apache.cxf.Bus;
 import org.apache.cxf.common.i18n.Message;
 import org.apache.cxf.common.logging.LogUtils;
@@ -136,26 +137,97 @@ public class TomcatHTTPServerEngine implements ServerEngine {
         if (server == null) {
             try {
                 // create a new tomcat server instance if there is no server there
-                Tomcat tomcat = new Tomcat();
+                //Tomcat tomcat = new Tomcat();
+                server = new Tomcat();
+                server.setHostname("localhost");
+                String appBase = ".";
+                server.getHost().setAppBase(appBase);
+
                 Connector connector = new Connector("org.apache.coyote.http11.Http11NioProtocol");
                 connector.setPort(getPort());
 
-                // add connector to server
-                tomcat.getService().addConnector(connector);
-
 //                int port = (getPort() >= 0) ? getPort() : 0;
 //                connector.setPort(port);
-                connector.getProtocolHandler();
-//                tomcat.
+                Http11NioProtocol protocol = (Http11NioProtocol) connector.getProtocolHandler();
+                // Use HTTPS
+                //connector.setScheme("https");
+                //connector.setSecure(true);
+                //protocol.setSSLEnabled(true);
+                //protocol.setKeyAlias("tomcat?");
+                //protocol.setKeystorePass("?");
+                //protocol.setKeystoreFile();
+                //protocol.setSslProtocol("TLS");
+//                protocol.setAddress(InetAddress.getLocalHost());
 
+                // add connector to server
+                server.getService().addConnector(connector);
 
-//                Context context = tomcat.addContext("", docBase.getAbsolutePath());
+                /*
+                 * The server may have no handler, it might have a collection handler,
+                 * it might have a one-shot. We need to add one or more of ours.
+                 *
+                 */
+                /*int numberOfHandlers = 1;
+                if (handlers != null) {
+                    numberOfHandlers += handlers.size();
+                }
+                Handler existingHandler = server.getHandler();
 
-//                Class servletClass = HelloServlet.class;
-//                Tomcat.addServlet(
-//                        context, servletClass.getSimpleName(), servletClass.getName());
-//                context.addServletMappingDecoded(
-//                        "/my-servlet/*", servletClass.getSimpleName());
+                HandlerCollection handlerCollection = null;
+                boolean existingHandlerCollection = existingHandler instanceof HandlerCollection;
+                if (existingHandlerCollection) {
+                    handlerCollection = (HandlerCollection) existingHandler;
+                }
+
+                if (!existingHandlerCollection
+                        &&
+                        (existingHandler != null || numberOfHandlers > 1)) {
+                    handlerCollection = new HandlerCollection();
+                    if (existingHandler != null) {
+                        handlerCollection.addHandler(existingHandler);
+                    }
+                    server.setHandler(handlerCollection);
+                }
+
+                *//*
+                 * At this point, the server's handler is a collection. It was either
+                 * one to start, or it is now one containing only the single handler
+                 * that was there to begin with.
+                 *//*
+                if (handlers != null && !handlers.isEmpty()) {
+                    for (Handler h : handlers) {
+                        // Filtering out the jetty default handler
+                        // which should not be added at this point.
+                        if (h instanceof DefaultHandler) {
+                            defaultHandler = (DefaultHandler) h;
+                        } else {
+                            if ((h instanceof SecurityHandler)
+                                    && ((SecurityHandler)h).getHandler() == null) {
+                                //if h is SecurityHandler(such as ConstraintSecurityHandler)
+                                //then it need be on top of JettyHTTPHandler
+                                //set JettyHTTPHandler as inner handler if
+                                //inner handler is null
+                                ((SecurityHandler)h).setHandler(handler);
+                                securityHandler = (SecurityHandler)h;
+                            } else {
+                                handlerCollection.addHandler(h);
+                            }
+                        }
+                    }
+                }
+                *//*
+                 * handlerCollection may be null here if is only one handler to deal with.
+                 * Which in turn implies that there can't be a 'defaultHander' to deal with.
+                 *//*
+                if (handlerCollection != null) {
+                    handlerCollection.addHandler(contexts);
+                    if (defaultHandler != null) {
+                        handlerCollection.addHandler(defaultHandler);
+                    }
+                } else {
+                    server.setHandler(contexts);
+                }
+*/
 //
 //                customizeConnector(connector);
                 // todo resolves with error
@@ -175,10 +247,51 @@ public class TomcatHTTPServerEngine implements ServerEngine {
 //                }
 
                 // todo investigate what it is
-                prepareContext(tomcat.getHost(), tomcat);
+                // Create default context
+                //tomcat.initWebappDefaults("defaultContext");
+                //server.initWebappDefaults("defaultContext");
+
+                //prepareContext(tomcat.getHost(), tomcat);
+                //prepareContext(server.getHost(), server);
+
+                // context handling
+                File docBase = new File(System.getProperty("java.io.tmpdir"));
+                Context context = server.addContext("", docBase.getAbsolutePath());
+
+
+                Class servletClass = HelloServlet.class;
+                server.addServlet(context, servletClass.getSimpleName(), servletClass.getName());
+                context.addServletMappingDecoded(
+                        "/my-servlet/*", servletClass.getSimpleName());
+
+
+                servletClass = HelloServlet2.class;
+                server.addServlet(context, servletClass.getSimpleName(), servletClass.getName());
+                context.addServletMappingDecoded(
+                        "/hello/test/*", servletClass.getSimpleName());
+
+                //server.addServlet("", "", "");
+                //server.addServlet(handler.getServletContext().getContextPath(), handler.getName(), "");
+                //context.addServletMappingDecoded(handler.getServletContext().getContextPath(), handler.getName());
+
+                Class cxfTomcatServletClass = CxfTomcatServlet.class;
+                Tomcat.addServlet(context, cxfTomcatServletClass.getSimpleName(), cxfTomcatServletClass.getName());
+                context.addServletMappingDecoded(
+                        "/tomcat-servlet/*", cxfTomcatServletClass.getSimpleName());
+/*                Class<CxfTomcatServlet> cxfTomcatServletClass = CxfTomcatServlet.class;
+                server.addWebapp()
+                Tomcat.addServlet(
+                        context, cxfTomcatServletClass.getSimpleName(), cxfTomcatServletClass.getName());
+//        Tomcat.addServlet(
+//                context, servletClass.getSimpleName()+ "1", servletClass.getName());
+                context.addServletMappingDecoded(
+                        "/hello/test/*", cxfTomcatServletClass.getSimpleName());
+//        context.addServletMappingDecoded(
+//                "/hello/test/*", servletClass.getSimpleName() + "1");*/
+
                 // Start the server to trigger initialization listeners
 //                tomcat.getConnector().setAsyncTimeout(300000);
-                server = tomcat;
+                //server = tomcat;
                 server.start();
 
                 startDaemonAwaitThread();
@@ -249,6 +362,7 @@ public class TomcatHTTPServerEngine implements ServerEngine {
 
     }
 
+/*
     private void prepareContext(Host host, Tomcat tomcat) {
         File docBase = new File(System.getProperty("java.io.tmpdir"));
         Context context = tomcat.addContext("", docBase.getAbsolutePath());
@@ -265,6 +379,8 @@ public class TomcatHTTPServerEngine implements ServerEngine {
                 "/my-servlet/*", servletClass.getSimpleName());
 
 
+*/
+/*
         Class<CxfTomcatServlet> cxfTomcatServletClass = CxfTomcatServlet.class;
         Tomcat.addServlet(
                 context, cxfTomcatServletClass.getSimpleName(), cxfTomcatServletClass.getName());
@@ -274,11 +390,14 @@ public class TomcatHTTPServerEngine implements ServerEngine {
                 "/hello/test/*", cxfTomcatServletClass.getSimpleName());
 //        context.addServletMappingDecoded(
 //                "/hello/test/*", servletClass.getSimpleName() + "1");
+*//*
+
 
 
 //        host.addChild(context);
         configureContext(context);
     }
+*/
 
     private void startDaemonAwaitThread() {
         Thread awaitThread = new Thread("container-" + (1)) {

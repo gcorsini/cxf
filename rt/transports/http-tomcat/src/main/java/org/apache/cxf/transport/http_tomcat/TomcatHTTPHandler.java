@@ -52,6 +52,11 @@ public class TomcatHTTPHandler implements Filter {
                        HttpServletResponse response) throws IOException, ServletException {
         if (request.getMethod().equals(METHOD_TRACE)) {
             // todo implement me
+
+            // Might be needed (based on
+            //request.setAttribute("HTTP_HANDLER", this);
+            //request.setAttribute("TOMCAT_DESTINATION", tomcatHTTPDestination);
+
 //            baseRequest.setHandled(true);
             response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
         } else {

@@ -44,6 +44,9 @@ public class TomcatHTTPTestHandler extends TomcatHTTPHandler {
                        HttpServletResponse resp) throws IOException, ServletException {
 
         System.out.println("123123123");
+        request.setAttribute("HTTP_HANDLER", this);
+        request.setAttribute("TOMCAT_DESTINATION", tomcatHTTPDestination);
+
         if (contextMatchExact) {
             // just return the response for testing
             resp.getOutputStream().write(response.getBytes());
