@@ -123,12 +123,14 @@ public class EngineLifecycleTest {
 
     private void invokeService() {
         DummyInterface client = (DummyInterface) applicationContext.getBean("dummy-client");
-        assertEquals("We should get out put from this client", "hello world", client.echo("hello world"));
+        String hello_world = client.echo("hello world");
+        assertEquals("We should get out put from this client", "hello world", hello_world);
     }
 
     private void invokeService8801() {
         DummyInterface client = (DummyInterface) applicationContext.getBean("dummy-client-8801");
-        assertEquals("We should get out put from this client", "hello world", client.echo("hello world"));
+        String hello_world = client.echo("hello world");
+        assertEquals("We should get out put from this client", "hello world", hello_world);
     }
 
     private static void verifyStaticHtml() throws Exception {

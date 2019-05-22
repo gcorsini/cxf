@@ -67,7 +67,7 @@ public class TomcatEngineLifecycleTest {
         TomcatHTTPServerEngine e = (TomcatHTTPServerEngine) jhd.getEngine();
         Tomcat server = e.getServer();
 
-        server.addServlet("/bloop", "default", new DefaultServlet());
+        server.addServlet("/bloop", "defaultServlet", new DefaultServlet());
 //        for (Handler h : server.getChildHandlersByClass(WebAppContext.class)) {
 //            WebAppContext wac = (WebAppContext) h;
 //            if ("/jsunit".equals(wac.getContextPath())) {
@@ -122,7 +122,9 @@ public class TomcatEngineLifecycleTest {
     }
 
     private void invokeService() {
+        System.out.println("Invoking a service");
         DummyInterface client = (DummyInterface) applicationContext.getBean("dummy-client");
+        System.out.println("Got a bean, invocating");
         String hello_world = client.echoTomcat("hello world");
         assertEquals("We should get out put from this client", "hello world", hello_world);
     }
