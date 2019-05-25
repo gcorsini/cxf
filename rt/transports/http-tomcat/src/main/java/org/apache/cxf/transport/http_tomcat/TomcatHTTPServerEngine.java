@@ -274,10 +274,17 @@ public class TomcatHTTPServerEngine implements ServerEngine {
                 //server.addServlet(handler.getServletContext().getContextPath(), handler.getName(), "");
                 //context.addServletMappingDecoded(handler.getServletContext().getContextPath(), handler.getName());
 
-                Class cxfTomcatServletClass = CxfTomcatServlet.class;
-                Tomcat.addServlet(context, cxfTomcatServletClass.getSimpleName(), cxfTomcatServletClass.getName());
+                TomcatHTTPDestination destination = handler.tomcatHTTPDestination;
+                //Class cxfTomcatServletClass = CxfTomcatServlet.class;
+                //Tomcat.addServlet(context, cxfTomcatServletClass.getSimpleName(), cxfTomcatServletClass.getName());
+                CxfTomcatServlet cxfTomcatServlet = new CxfTomcatServlet();
+                cxfTomcatServlet.setDestination(destination);
+                Tomcat.addServlet(context, "tomcatServlet", cxfTomcatServlet);
+
+//                context.addServletMappingDecoded(
+//                        "/tomcat-servlet/*", cxfTomcatServletClass.getSimpleName());
                 context.addServletMappingDecoded(
-                        "/tomcat-servlet/*", cxfTomcatServletClass.getSimpleName());
+                        "/tomcat-servlet/*", "tomcatServlet");
 /*                Class<CxfTomcatServlet> cxfTomcatServletClass = CxfTomcatServlet.class;
                 server.addWebapp()
                 Tomcat.addServlet(

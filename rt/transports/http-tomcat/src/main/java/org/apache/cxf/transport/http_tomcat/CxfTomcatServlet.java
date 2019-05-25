@@ -33,6 +33,12 @@ import org.apache.cxf.transport.servlet.AbstractHTTPServlet;
 public class CxfTomcatServlet extends AbstractHTTPServlet {
 
     private static final long serialVersionUID = 1L;
+    private static TomcatHTTPDestination destination;
+
+
+    public void setDestination(TomcatHTTPDestination tomcatHTTPDestination){
+        destination = tomcatHTTPDestination;
+    }
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
@@ -49,8 +55,8 @@ public class CxfTomcatServlet extends AbstractHTTPServlet {
     protected void invoke(HttpServletRequest request, HttpServletResponse response) throws ServletException {
 
         System.out.println("inside tomcat servlet ");
-        TomcatHTTPDestination tomcatHTTPDestination =
-                (TomcatHTTPDestination) request.getAttribute("TOMCAT_DESTINATION");
+        TomcatHTTPDestination tomcatHTTPDestination = destination;
+                //(TomcatHTTPDestination) request.getAttribute("TOMCAT_DESTINATION");
         try {
             tomcatHTTPDestination.doService(request.getServletContext(), request, response);
         } catch (IOException e) {
