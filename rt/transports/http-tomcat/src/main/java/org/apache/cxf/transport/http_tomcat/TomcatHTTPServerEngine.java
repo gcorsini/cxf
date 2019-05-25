@@ -64,11 +64,6 @@ public class TomcatHTTPServerEngine implements ServerEngine {
      * This is the network port for which this engine is allocated.
      */
     private int port;
-//
-//    /**
-//     * This is the network address for which this engine is allocated.
-//     */
-//    private Host host;
 
     /**
      * This field holds the protocol for which this engine is

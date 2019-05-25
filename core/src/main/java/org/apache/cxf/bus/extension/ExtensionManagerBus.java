@@ -189,6 +189,7 @@ public class ExtensionManagerBus extends AbstractBasicInterceptorProvider implem
                     //force loading
                     Collection<?> objs = loc.getBeansOfType(extensionType);
                     if (objs != null && !objs.isEmpty()) {
+                        // todo here it puts first found element. therefore Tomcat is NOT found as a destination factory bean
                         extensions.put(extensionType, objs.iterator().next());
                     }
                     obj = extensions.get(extensionType);
