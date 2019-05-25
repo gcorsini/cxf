@@ -52,6 +52,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.tomcat.util.descriptor.web.FilterDef;
+import org.apache.tomcat.util.descriptor.web.FilterMap;
+import org.xml.sax.helpers.DefaultHandler;
 
 public class TomcatHTTPServerEngine implements ServerEngine {
 
@@ -269,12 +272,26 @@ public class TomcatHTTPServerEngine implements ServerEngine {
                 //server.addServlet(handler.getServletContext().getContextPath(), handler.getName(), "");
                 //context.addServletMappingDecoded(handler.getServletContext().getContextPath(), handler.getName());
 
-                TomcatHTTPDestination destination = handler.tomcatHTTPDestination;
+/*                TomcatHTTPDestination destination = handler.tomcatHTTPDestination;
                 //Class cxfTomcatServletClass = CxfTomcatServlet.class;
                 //Tomcat.addServlet(context, cxfTomcatServletClass.getSimpleName(), cxfTomcatServletClass.getName());
                 CxfTomcatServlet cxfTomcatServlet = new CxfTomcatServlet();
                 cxfTomcatServlet.setDestination(destination);
-                Tomcat.addServlet(context, "tomcatServlet", cxfTomcatServlet);
+                Tomcat.addServlet(context, "tomcatServlet", cxfTomcatServlet);*/
+
+                Class filterClass = handler.getClass();
+                String filterName = filterClass.getName();
+                //String filterName = handler.getName();
+                FilterDef def = new FilterDef();
+                def.setFilterName(filterName);
+                def.setFilter( handler );
+                context.addFilterDef( def );
+                FilterMap map = new FilterMap();
+                map.setFilterName( filterName );
+                map.addURLPattern( "/tomcat-servlet/*" );
+                context.addFilterMap( map );
+
+                Tomcat.addServlet(context, "tomcatServlet", new CxfTomcatServlet());
 
 //                context.addServletMappingDecoded(
 //                        "/tomcat-servlet/*", cxfTomcatServletClass.getSimpleName());

@@ -22,7 +22,10 @@ package org.apache.cxf.transport.http_tomcat;
 import org.apache.catalina.connector.RequestFacade;
 import org.apache.cxf.transport.http.HttpUrlUtil;
 
+import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -58,6 +61,22 @@ public class TomcatHTTPTestHandler extends TomcatHTTPHandler {
         }
     }
 
+    @Override
+    public void doFilter(ServletRequest request, ServletResponse resp, FilterChain chain) throws IOException, ServletException {
+        System.out.println("In TomcatHTTPTestHandler inside filter method");
+        if (contextMatchExact) {
+            // just return the response for testing
+            resp.getOutputStream().write(response.getBytes());
+            resp.flushBuffer();
+
+        } else {
+            String target =((HttpServletRequest) ((ServletRequest) request)).getPathInfo();
+            if (target.equals(getName()) || HttpUrlUtil.checkContextPath(getName(), target)) {
+                resp.getOutputStream().write(response.getBytes());
+                resp.flushBuffer();
+            }
+        }
+    }
 
 
 }

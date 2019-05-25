@@ -53,7 +53,7 @@ public class TomcatHTTPHandler implements Filter {
         if (request.getMethod().equals(METHOD_TRACE)) {
             // todo implement me
 
-            // Might be needed (based on
+            // Might be needed (based on Jetty implementation)
             request.setAttribute("HTTP_HANDLER", this);
             request.setAttribute("TOMCAT_DESTINATION", tomcatHTTPDestination);
 
@@ -85,6 +85,13 @@ public class TomcatHTTPHandler implements Filter {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         System.out.println("Im in filter method");
+        // Might be needed (based on Jetty implementation)
+        request.setAttribute("HTTP_HANDLER", this);
+        request.setAttribute("TOMCAT_DESTINATION", tomcatHTTPDestination);
+
+        HttpServletResponse httpResponse = (HttpServletResponse) response;
+        httpResponse.addHeader("myHeader", "myHeaderValue");
+        chain.doFilter(request, httpResponse);
     }
 
     @Override

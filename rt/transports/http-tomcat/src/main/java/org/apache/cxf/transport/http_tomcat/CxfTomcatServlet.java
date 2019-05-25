@@ -33,17 +33,13 @@ import org.apache.cxf.transport.servlet.AbstractHTTPServlet;
 public class CxfTomcatServlet extends AbstractHTTPServlet {
 
     private static final long serialVersionUID = 1L;
-    private static TomcatHTTPDestination destination;
-
-
-    public void setDestination(TomcatHTTPDestination tomcatHTTPDestination){
-        destination = tomcatHTTPDestination;
-    }
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
-
+        HttpServletResponse httpResponse = (HttpServletResponse) response;
+        httpResponse.addHeader("myHeader", "myHeaderValue");
+        chain.doFilter(request, httpResponse);
     }
 
     @Override
@@ -54,9 +50,21 @@ public class CxfTomcatServlet extends AbstractHTTPServlet {
     @Override
     protected void invoke(HttpServletRequest request, HttpServletResponse response) throws ServletException {
 
-        System.out.println("inside tomcat servlet ");
-        TomcatHTTPDestination tomcatHTTPDestination = destination;
-                //(TomcatHTTPDestination) request.getAttribute("TOMCAT_DESTINATION");
+        System.out.println("inside tomcat servlet");
+
+/*        try {
+            response.setStatus(HttpServletResponse.SC_OK);
+            response.getWriter().write("inside tomcat servlet");
+            response.getWriter().flush();
+            response.getWriter().close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new ServletException(e);
+        }*/
+
+
+        TomcatHTTPDestination tomcatHTTPDestination =
+                (TomcatHTTPDestination) request.getAttribute("TOMCAT_DESTINATION");
         try {
             tomcatHTTPDestination.doService(request.getServletContext(), request, response);
         } catch (IOException e) {
