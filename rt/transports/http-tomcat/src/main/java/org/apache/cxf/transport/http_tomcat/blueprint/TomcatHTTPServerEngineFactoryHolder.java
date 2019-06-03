@@ -33,6 +33,7 @@ import org.apache.cxf.transport.http_tomcat.TomcatHTTPServerEngineFactory;
 import org.apache.cxf.transports.http_tomcat.configuration.*;
 import org.w3c.dom.Element;
 
+import javax.servlet.Filter;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -49,7 +50,7 @@ public class TomcatHTTPServerEngineFactoryHolder {
     private String parsedElement;
     private TomcatHTTPServerEngineFactory factory;
 
-    private Map<String, List<Handler>> handlersMap;
+    private Map<String, List<Filter>> handlersMap;
 
 
     private JAXBContext jaxbContext;
@@ -110,7 +111,7 @@ public class TomcatHTTPServerEngineFactoryHolder {
                 TomcatHTTPServerEngine eng = new TomcatHTTPServerEngine();
 
                 if (engine.getHandlers() != null && handlersMap != null) {
-                    List<Handler> handlers = handlersMap.get(engine.getPort().toString());
+                    List<Filter> handlers = handlersMap.get(engine.getPort().toString());
                     if (handlers != null) {
                         eng.setHandlers(handlers);
                     } else {
@@ -190,7 +191,7 @@ public class TomcatHTTPServerEngineFactoryHolder {
         this.parsedElement = parsedElement;
     }
 
-    public void setHandlersMap(Map<String, List<Handler>> handlersMap) {
+    public void setHandlersMap(Map<String, List<Filter>> handlersMap) {
         this.handlersMap = handlersMap;
     }
 

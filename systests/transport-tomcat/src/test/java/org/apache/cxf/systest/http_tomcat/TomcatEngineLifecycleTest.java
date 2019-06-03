@@ -63,8 +63,8 @@ public class TomcatEngineLifecycleTest {
         Bus bus = (Bus)applicationContext.getBean("cxf");
         ServerRegistry sr = bus.getExtension(ServerRegistry.class);
         ServerImpl si = (ServerImpl) sr.getServers().get(0);
-        TomcatHTTPDestination jhd = (TomcatHTTPDestination) si.getDestination();
-        TomcatHTTPServerEngine e = (TomcatHTTPServerEngine) jhd.getEngine();
+        TomcatHTTPDestination thd = (TomcatHTTPDestination) si.getDestination();
+        TomcatHTTPServerEngine e = thd.getEngine();
         Tomcat server = e.getServer();
 
         server.addServlet("/bloop", "defaultServlet", new DefaultServlet());

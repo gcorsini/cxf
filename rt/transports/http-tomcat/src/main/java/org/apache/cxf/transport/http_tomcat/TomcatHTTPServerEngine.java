@@ -37,6 +37,7 @@ import org.apache.cxf.transport.HttpUriMapper;
 import org.springframework.util.ClassUtils;
 
 import javax.annotation.PostConstruct;
+import javax.servlet.Filter;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -83,7 +84,7 @@ public class TomcatHTTPServerEngine implements ServerEngine {
     private int servantCount;
     private Tomcat server;
     private Connector connector;
-    private List<Handler> handlers;
+    private List<Filter> handlers;
     private List<String> registedPaths = new CopyOnWriteArrayList<>();
     private int backgroundProcessorDelay;
     private String host;
@@ -256,61 +257,27 @@ public class TomcatHTTPServerEngine implements ServerEngine {
                 File docBase = new File(System.getProperty("java.io.tmpdir"));
                 Context context = server.addContext("", docBase.getAbsolutePath());
 
+                //Get the URL Pattern from the input url string
+                String urlPattern = url.getPath();
 
-                Class servletClass = HelloServlet.class;
-                server.addServlet(context, servletClass.getSimpleName(), servletClass.getName());
-                context.addServletMappingDecoded(
-                        "/my-servlet/*", servletClass.getSimpleName());
-
-
-                servletClass = HelloServlet2.class;
-                server.addServlet(context, servletClass.getSimpleName(), servletClass.getName());
-                context.addServletMappingDecoded(
-                        "/hello/test/*", servletClass.getSimpleName());
-
-                //server.addServlet("", "", "");
-                //server.addServlet(handler.getServletContext().getContextPath(), handler.getName(), "");
-                //context.addServletMappingDecoded(handler.getServletContext().getContextPath(), handler.getName());
-
-/*                TomcatHTTPDestination destination = handler.tomcatHTTPDestination;
-                //Class cxfTomcatServletClass = CxfTomcatServlet.class;
-                //Tomcat.addServlet(context, cxfTomcatServletClass.getSimpleName(), cxfTomcatServletClass.getName());
-                CxfTomcatServlet cxfTomcatServlet = new CxfTomcatServlet();
-                cxfTomcatServlet.setDestination(destination);
-                Tomcat.addServlet(context, "tomcatServlet", cxfTomcatServlet);*/
+                // TODO: Get servlet name from handler??
+                String servletName = "tomcatServlet";
 
                 Class filterClass = handler.getClass();
                 String filterName = filterClass.getName();
-                //String filterName = handler.getName();
                 FilterDef def = new FilterDef();
                 def.setFilterName(filterName);
                 def.setFilter( handler );
                 context.addFilterDef( def );
                 FilterMap map = new FilterMap();
                 map.setFilterName( filterName );
-                map.addURLPattern( "/tomcat-servlet/*" );
+                map.addURLPattern( urlPattern );
                 context.addFilterMap( map );
 
-                Tomcat.addServlet(context, "tomcatServlet", new CxfTomcatServlet());
+                Tomcat.addServlet(context, servletName, new CxfTomcatServlet());
+                context.addServletMappingDecoded(urlPattern, servletName);
 
-//                context.addServletMappingDecoded(
-//                        "/tomcat-servlet/*", cxfTomcatServletClass.getSimpleName());
-                context.addServletMappingDecoded(
-                        "/tomcat-servlet/*", "tomcatServlet");
-/*                Class<CxfTomcatServlet> cxfTomcatServletClass = CxfTomcatServlet.class;
-                server.addWebapp()
-                Tomcat.addServlet(
-                        context, cxfTomcatServletClass.getSimpleName(), cxfTomcatServletClass.getName());
-//        Tomcat.addServlet(
-//                context, servletClass.getSimpleName()+ "1", servletClass.getName());
-                context.addServletMappingDecoded(
-                        "/hello/test/*", cxfTomcatServletClass.getSimpleName());
-//        context.addServletMappingDecoded(
-//                "/hello/test/*", servletClass.getSimpleName() + "1");*/
 
-                // Start the server to trigger initialization listeners
-//                tomcat.getConnector().setAsyncTimeout(300000);
-                //server = tomcat;
                 server.start();
 
                 startDaemonAwaitThread();
@@ -578,7 +545,7 @@ public class TomcatHTTPServerEngine implements ServerEngine {
         }
     }
 
-    public void setHandlers(List<Handler> handlers) {
+    public void setHandlers(List<Filter> handlers) {
         this.handlers = handlers;
     }
 
@@ -657,7 +624,7 @@ public class TomcatHTTPServerEngine implements ServerEngine {
         return threadingParameters;
     }
 
-    public List<Handler> getHandlers() {
+    public List<Filter> getHandlers() {
         return handlers;
     }
 }

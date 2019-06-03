@@ -1,6 +1,7 @@
 package org.apache.cxf.transport.http_tomcat;
 
 import org.apache.catalina.connector.Connector;
+import org.apache.catalina.startup.Tomcat;
 import org.apache.cxf.Bus;
 import org.apache.cxf.configuration.Configurer;
 import org.apache.cxf.configuration.jsse.TLSServerParameters;
@@ -8,11 +9,13 @@ import org.apache.cxf.configuration.spring.ConfigurerImpl;
 import org.apache.cxf.helpers.IOUtils;
 import org.apache.cxf.management.InstrumentationManager;
 import org.apache.cxf.testutil.common.TestUtil;
+import org.apache.tomcat.util.descriptor.web.ContextHandler;
 import org.easymock.EasyMock;
 import org.easymock.IMocksControl;
 import org.junit.Before;
 import org.junit.Test;
 
+import javax.servlet.Filter;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.lang.management.ManagementFactory;
@@ -20,10 +23,10 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class TomcatHTTPServerEngineTest {
 
@@ -33,6 +36,8 @@ public class TomcatHTTPServerEngineTest {
             = Integer.valueOf(TestUtil.getPortNumber(TomcatHTTPServerEngineTest.class, 2));
     private static final int PORT3
             = Integer.valueOf(TestUtil.getPortNumber(TomcatHTTPServerEngineTest.class, 3));
+    private static final int PORT4
+            = Integer.valueOf(TestUtil.getPortNumber(TomcatHTTPServerEngineTest.class, 4));
 
 
     private Bus bus;
@@ -115,29 +120,71 @@ public class TomcatHTTPServerEngineTest {
     public void testaddServants() throws Exception {
         String urlStr = "http://localhost:" + PORT1 + "/hello/test";
         String urlStr2 = "http://localhost:" + PORT1 + "/hello233/test";
-        String urlStr3 = "http://localhost:" + PORT1 + "/";
-
-        TomcatHTTPServerEngine serverEngine = new TomcatHTTPServerEngine(8080);
+        TomcatHTTPServerEngine serverEngine =
+                factory.createTomcatHTTPServerEngine(PORT1, "http");
         serverEngine.setMaxIdleTime(30000);
-        urlStr3 = "http://localhost:" + "8080" + "/hello/test";
-        urlStr2 = "http://localhost:8080/my-servlet/";
-        urlStr = "http://localhost:8080/tomcat-servlet/";
         serverEngine.addServant(new URL(urlStr), new TomcatHTTPTestHandler("Using test handler", true));
-//        serverEngine.addServant("http://localhost:8080");
+        // TODO: check setting MaxIdleTime
+        //assertEquals("Get the wrong maxIdleTime.", 30000, getMaxIdle(serverEngine.getConnector()));
+
         String response = null;
-        response = getResponse(urlStr3);
+        response = getResponse(urlStr);
+        assertEquals("The tomcat http handler did not take effect", response, "Using test handler");//        serverEngine.addServant("http://localhost:8080");
+        System.out.println(response);
+
+/*        response = getResponse(urlStr3);
         System.out.println(response);
         assertEquals("The tomcat failed to query tomcat-servlet", response, "inside hello second servlet");
         response = getResponse(urlStr2);
         System.out.println(response);
-        assertEquals("The tomcat failed to query my-servlet", response, "inside hello servlet ");
-        response = getResponse(urlStr);
-        System.out.println(response);
-        assertEquals("The tomcat http handler did not take effect", response, "Using test handler");
+        assertEquals("The tomcat failed to query my-servlet", response, "inside hello servlet ");*/
+
 
         // todo add more assertions
-        Thread.sleep(1000);
-        serverEngine.stop();
+        try {
+            serverEngine.addServant(new URL(urlStr), new TomcatHTTPTestHandler("string2", true));
+            fail("We don't support to publish the two service at the same context path");
+        } catch (Exception ex) {
+            assertTrue("Get a wrong exception message", ex.getMessage().indexOf("hello/test") > 0);
+        }
+
+        try {
+            serverEngine.addServant(new URL(urlStr + "/test"), new TomcatHTTPTestHandler("string2", true));
+            fail("We don't support to publish the two service at the same context path");
+        } catch (Exception ex) {
+            assertTrue("Get a wrong exception message", ex.getMessage().indexOf("hello/test/test") > 0);
+        }
+
+        try {
+            serverEngine.addServant(new URL("http://localhost:" + PORT1 + "/hello"),
+                    new TomcatHTTPTestHandler("string2", true));
+            fail("We don't support to publish the two service at the same context path");
+        } catch (Exception ex) {
+            assertTrue("Get a wrong exception message", ex.getMessage().indexOf("hello") > 0);
+        }
+
+        // ToDo: Removed the following lines. If multiple servlets are added these will have to work as well.
+/*        // check if the system property change could work
+        System.setProperty("org.apache.cxf.transports.http_tomcat.DontCheckUrl", "true");
+        serverEngine.addServant(new URL(urlStr + "/test"), new TomcatHTTPTestHandler("string2", true));
+        // clean up the System property setting
+        System.clearProperty("org.apache.cxf.transports.http_tomcat.DontCheckUrl");
+
+        serverEngine.addServant(new URL(urlStr2), new TomcatHTTPTestHandler("string2", true));
+
+        Set<ObjectName>  s = CastUtils.cast(ManagementFactory.getPlatformMBeanServer().
+                queryNames(new ObjectName("org.eclipse.jetty.server:type=server,*"), null));
+        assertEquals("Could not find 1 Jetty Server: " + s, 1, s.size());
+
+        serverEngine.removeServant(new URL(urlStr));
+        serverEngine.shutdown();
+        response = getResponse(urlStr2);
+        assertEquals("The tomcat http handler did not take effect", response, "string2");*/
+        // set the get request
+        factory.destroyForPort(PORT1);
+
+        /*Thread.sleep(1000);
+        serverEngine.stop();*/
 
 
     }
@@ -148,7 +195,7 @@ public class TomcatHTTPServerEngineTest {
      */
     @Test
     public void testSettingThreadNames() throws Exception {
-
+        fail("Test empty");
     }
 
     @Test
@@ -165,24 +212,138 @@ public class TomcatHTTPServerEngineTest {
 
     @Test
     public void testSetHandlers() throws Exception {
+        URL url = new URL("http://localhost:" + PORT2 + "/hello/test");
+        TomcatHTTPTestHandler handler1 = new TomcatHTTPTestHandler("string1", true);
+        TomcatHTTPTestHandler handler2 = new TomcatHTTPTestHandler("string2", true);
 
+        TomcatHTTPServerEngine engine = new TomcatHTTPServerEngine();
+        engine.setPort(PORT2);
+
+        List<Filter> handlers = new ArrayList<>();
+        handlers.add(handler1);
+        engine.setHandlers(handlers);
+        engine.finalizeConfig();
+
+        engine.addServant(url, handler2);
+        String response = null;
+        try {
+            response = getResponse(url.toString());
+            assertEquals("the tomcat http handler1 did not take effect", response, "string1string2");
+        } catch (Exception ex) {
+            fail("Can't get the reponse from the server " + ex);
+        }
+        engine.stop();
+        TomcatHTTPServerEngineFactory.destroyForPort(PORT2);
     }
 
     @Test
     public void testGetContextHandler() throws Exception {
+        fail("Test empty");
 
+/*        String urlStr = "http://localhost:" + PORT1 + "/hello/test";
+        TomcatHTTPServerEngine engine =
+                factory.createTomcatHTTPServerEngine(PORT1, "http");
+        ContextHandler contextHandler = engine.getContextHandler(new URL(urlStr));
+        // can't find the context handler here
+        assertNull(contextHandler);
+        TomcatHTTPTestHandler handler1 = new TomcatHTTPTestHandler("string1", true);
+        TomcatHTTPTestHandler handler2 = new TomcatHTTPTestHandler("string2", true);
+        engine.addServant(new URL(urlStr), handler1);
 
+        // Note: There appears to be an internal issue in Jetty that does not
+        // unregister the MBean for handler1 during this setHandler operation.
+        // This scenario may create a warning message in the logs
+        //     (javax.management.InstanceAlreadyExistsException: org.apache.cxf.
+        //         transport.http_jetty:type=jettyhttptesthandler,id=0)
+        // when running subsequent tests.
+        contextHandler = engine.getContextHandler(new URL(urlStr));
+        contextHandler.stop();
+        contextHandler.setHandler(handler2);
+        contextHandler.start();
+
+        String response = null;
+        try {
+            response = getResponse(urlStr);
+        } catch (Exception ex) {
+            fail("Can't get the reponse from the server " + ex);
+        }
+        assertEquals("the jetty http handler did not take effect", response, "string2");
+        TomcatHTTPServerEngineFactory.destroyForPort(PORT1);*/
     }
 
     @Test
     public void testTomcatHTTPHandler() throws Exception {
+        fail("Test empty");
 
+/*        String urlStr1 = "http://localhost:" + PORT3 + "/hello/test1";
+        String urlStr2 = "http://localhost:" + PORT3 + "/hello/test2";
+        TomcatHTTPServerEngine engine =
+                factory.createTomcatHTTPServerEngine(PORT3, "http");
+        ContextHandler contextHandler = engine.getContextHandler(new URL(urlStr1));
+        // can't find the context handler here
+        assertNull(contextHandler);
+        TomcatHTTPHandler handler1 = new TomcatHTTPTestHandler("test", false);
+        TomcatHTTPHandler handler2 = new TomcatHTTPTestHandler("test2", false);
+        engine.addServant(new URL(urlStr1), handler1);
+
+        contextHandler = engine.getContextHandler(new URL(urlStr1));
+
+        engine.addServant(new URL(urlStr2), handler2);
+        contextHandler = engine.getContextHandler(new URL(urlStr2));
+
+        String response = null;
+        try {
+            response = getResponse(urlStr1 + "/test");
+        } catch (Exception ex) {
+            fail("Can't get the reponse from the server " + ex);
+        }
+        assertEquals("the jetty http handler did not take effect", response, "test");
+
+        try {
+            response = getResponse(urlStr2 + "/test");
+        } catch (Exception ex) {
+            fail("Can't get the reponse from the server " + ex);
+        }
+        assertEquals("the jetty http handler did not take effect", response, "test2");
+
+        TomcatHTTPServerEngineFactory.destroyForPort(PORT3);*/
     }
 
     @Test
     public void testSetConnector() throws Exception {
+        fail("Test empty");
 
+/*        URL url = new URL("http://localhost:" + PORT4 + "/hello/test");
+        TomcatHTTPTestHandler handler1 = new TomcatHTTPTestHandler("string1", true);
+        TomcatHTTPTestHandler handler2 = new TomcatHTTPTestHandler("string2", true);
 
+        TomcatHTTPServerEngine engine = new TomcatHTTPServerEngine();
+        engine.setPort(PORT4);
+        Tomcat server = new Tomcat();
+        Connector connector = new Connector("org.apache.coyote.http11.Http11NioProtocol");
+        connector.setPort(PORT4);
+        HttpConfiguration httpConfig = new HttpConfiguration();
+        httpConfig.addCustomizer(new org.eclipse.jetty.server.ForwardedRequestCustomizer());
+        HttpConnectionFactory httpFactory = new HttpConnectionFactory(httpConfig);
+        Collection<ConnectionFactory> connectionFactories = new ArrayList<>();
+        connectionFactories.add(httpFactory);
+        connector.setConnectionFactories(connectionFactories);
+        engine.setConnector(connector);
+        List<Handler> handlers = new ArrayList<>();
+        handlers.add(handler1);
+        engine.setHandlers(handlers);
+        engine.finalizeConfig();
+
+        engine.addServant(url, handler2);
+        String response = null;
+        try {
+            response = getResponse(url.toString());
+            assertEquals("the jetty http handler1 did not take effect", response, "string1string2");
+        } catch (Exception ex) {
+            fail("Can't get the reponse from the server " + ex);
+        }
+        engine.stop();
+        TomcatHTTPServerEngineFactory.destroyForPort(PORT4);*/
     }
 
 
