@@ -1,5 +1,6 @@
 package org.apache.cxf.transport.http_tomcat;
 
+import org.apache.catalina.Context;
 import org.apache.catalina.connector.Connector;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.cxf.Bus;
@@ -16,6 +17,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import javax.servlet.Filter;
+import javax.servlet.ServletContext;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.lang.management.ManagementFactory;
@@ -240,26 +242,34 @@ public class TomcatHTTPServerEngineTest {
     public void testGetContextHandler() throws Exception {
         fail("Test empty");
 
-/*        String urlStr = "http://localhost:" + PORT1 + "/hello/test";
+        /*String urlStr = "http://localhost:" + PORT1 + "/hello/test";
         TomcatHTTPServerEngine engine =
                 factory.createTomcatHTTPServerEngine(PORT1, "http");
-        ContextHandler contextHandler = engine.getContextHandler(new URL(urlStr));
-        // can't find the context handler here
-        assertNull(contextHandler);
+
+        ServletContext context = engine.getServant(new URL(urlStr)).getServletContext();
+        ((Context) context).addServletMappingDecoded("/hello/test","contextHandlerTest");
+
+//        ContextHandler contextHandler = engine.getContextHandler(new URL(urlStr));
+//        // can't find the context handler here
+//        assertNull(contextHandler);
         TomcatHTTPTestHandler handler1 = new TomcatHTTPTestHandler("string1", true);
         TomcatHTTPTestHandler handler2 = new TomcatHTTPTestHandler("string2", true);
         engine.addServant(new URL(urlStr), handler1);
 
-        // Note: There appears to be an internal issue in Jetty that does not
-        // unregister the MBean for handler1 during this setHandler operation.
-        // This scenario may create a warning message in the logs
-        //     (javax.management.InstanceAlreadyExistsException: org.apache.cxf.
-        //         transport.http_jetty:type=jettyhttptesthandler,id=0)
-        // when running subsequent tests.
-        contextHandler = engine.getContextHandler(new URL(urlStr));
-        contextHandler.stop();
-        contextHandler.setHandler(handler2);
-        contextHandler.start();
+        context = engine.getServant(new URL(urlStr)).getServletContext();
+        // TODO: remove handler1
+        //context.getFilterRegistration(handler1.getName())
+        context.addFilter(handler2.getName(), handler2);
+//        // Note: There appears to be an internal issue in Jetty that does not
+//        // unregister the MBean for handler1 during this setHandler operation.
+//        // This scenario may create a warning message in the logs
+//        //     (javax.management.InstanceAlreadyExistsException: org.apache.cxf.
+//        //         transport.http_jetty:type=jettyhttptesthandler,id=0)
+//        // when running subsequent tests.
+//        contextHandler = engine.getContextHandler(new URL(urlStr));
+//        contextHandler.stop();
+//        contextHandler.setHandler(handler2);
+//        contextHandler.start();
 
         String response = null;
         try {

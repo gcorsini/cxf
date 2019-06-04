@@ -18,6 +18,7 @@
  */
 package org.apache.cxf.systest.http_tomcat;
 
+import org.apache.catalina.Context;
 import org.apache.catalina.servlets.DefaultServlet;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.cxf.Bus;
@@ -29,6 +30,7 @@ import org.apache.cxf.testutil.common.TestUtil;
 import org.apache.cxf.transport.http_tomcat.TomcatDestinationFactory;
 import org.apache.cxf.transport.http_tomcat.TomcatHTTPDestination;
 import org.apache.cxf.transport.http_tomcat.TomcatHTTPServerEngine;
+import org.apache.tomcat.util.descriptor.web.FilterDef;
 import org.junit.Test;
 import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
 import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
@@ -67,7 +69,15 @@ public class TomcatEngineLifecycleTest {
         TomcatHTTPServerEngine e = thd.getEngine();
         Tomcat server = e.getServer();
 
-        server.addServlet("/bloop", "defaultServlet", new DefaultServlet());
+        Context context = server.addContext("/jsunit", "/");
+        server.addServlet("/jsunit", "defaultServlet", new DefaultServlet());
+        context.addServletMappingDecoded("/jsunit", "defaultServlet");
+
+/*        FilterDef[] filters = context.findFilterDefs();
+        for (int i = 0; i < filters.length; i++) {
+            System.out.println("Filter: " + filters[i].getFilter());
+        }*/
+
 //        for (Handler h : server.getChildHandlersByClass(WebAppContext.class)) {
 //            WebAppContext wac = (WebAppContext) h;
 //            if ("/jsunit".equals(wac.getContextPath())) {
