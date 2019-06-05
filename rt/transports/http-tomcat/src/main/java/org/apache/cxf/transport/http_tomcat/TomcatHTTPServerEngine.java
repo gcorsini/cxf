@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License. You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -18,12 +18,12 @@
  */
 package org.apache.cxf.transport.http_tomcat;
 
-import org.apache.catalina.*;
+import org.apache.catalina.Context;
+import org.apache.catalina.LifecycleException;
+import org.apache.catalina.LifecycleState;
+import org.apache.catalina.Wrapper;
 import org.apache.catalina.connector.Connector;
-import org.apache.catalina.core.StandardContext;
-import org.apache.catalina.loader.WebappLoader;
 import org.apache.catalina.startup.Tomcat;
-import org.apache.coyote.AbstractProtocol;
 import org.apache.coyote.http11.Http11NioProtocol;
 import org.apache.cxf.Bus;
 import org.apache.cxf.common.i18n.Message;
@@ -32,30 +32,21 @@ import org.apache.cxf.common.util.PropertyUtils;
 import org.apache.cxf.common.util.SystemPropertyAction;
 import org.apache.cxf.configuration.jsse.TLSServerParameters;
 import org.apache.cxf.interceptor.Fault;
-import org.apache.cxf.jaxrs.servlet.CXFNonSpringJaxrsServlet;
 import org.apache.cxf.transport.HttpUriMapper;
-import org.springframework.util.ClassUtils;
+import org.apache.tomcat.util.descriptor.web.FilterDef;
+import org.apache.tomcat.util.descriptor.web.FilterMap;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.Filter;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
-import java.io.Writer;
-import java.net.InetAddress;
 import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.logging.Handler;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.apache.tomcat.util.descriptor.web.FilterDef;
-import org.apache.tomcat.util.descriptor.web.FilterMap;
-import org.xml.sax.helpers.DefaultHandler;
 
 public class TomcatHTTPServerEngine implements ServerEngine {
 
@@ -85,7 +76,8 @@ public class TomcatHTTPServerEngine implements ServerEngine {
     private Tomcat server;
     private Connector connector;
     private List<Filter> handlers;
-    private List<String> registedPaths = new CopyOnWriteArrayList<>();
+    private ConcurrentMap<String, TomcatHTTPHandler> registedPaths =
+            new ConcurrentHashMap<>();
     private int backgroundProcessorDelay;
     private String host;
 
@@ -119,7 +111,16 @@ public class TomcatHTTPServerEngine implements ServerEngine {
 
     @Override
     public void removeServant(URL url) {
-
+        LifecycleState state = server.getEngine().getState();
+        if (server != null && state == LifecycleState.STARTED) {
+            TomcatHTTPHandler tomcatHTTPHandler = registedPaths.get(url.getPath());
+            tomcatHTTPHandler.destroy();
+            TomcatHTTPHandler handler = registedPaths.remove(url.getPath());
+            if (handler == null) {
+                return;
+            }
+            --servantCount;
+        }
     }
 
     @Override
@@ -166,11 +167,8 @@ public class TomcatHTTPServerEngine implements ServerEngine {
                  * it might have a one-shot. We need to add one or more of ours.
                  *
                  */
-                /*int numberOfHandlers = 1;
-                if (handlers != null) {
-                    numberOfHandlers += handlers.size();
-                }
-                Handler existingHandler = server.getHandler();
+
+                /*
 
                 HandlerCollection handlerCollection = null;
                 boolean existingHandlerCollection = existingHandler instanceof HandlerCollection;
@@ -227,29 +225,6 @@ public class TomcatHTTPServerEngine implements ServerEngine {
                     server.setHandler(contexts);
                 }
 */
-//
-//                customizeConnector(connector);
-                // todo resolves with error
-
-//                ((AbstractProtocol<?>) connector.getProtocolHandler()).setAddress(InetAddress.getLocalHost());
-//                tomcat.setConnector(connector);
-
-//                tomcat.setPort(port);
-//                tomcat.getHost().setAutoDeploy(false);
-//                tomcat.getHost().setAutoDeploy(true);
-//                tomcat.getServer().setPort(port);
-//                Engine engine = tomcat.getEngine();
-//                engine.setBackgroundProcessorDelay(this.backgroundProcessorDelay);
-                // todo investigate what it is
-//                for (Valve valve : this.engineValves) {
-//                    engine.getPipeline().addValve(valve);
-//                }
-
-                // todo investigate what it is
-                // Create default context
-                //tomcat.initWebappDefaults("defaultContext");
-                //server.initWebappDefaults("defaultContext");
-
                 //prepareContext(tomcat.getHost(), tomcat);
                 //prepareContext(server.getHost(), server);
 
@@ -267,12 +242,12 @@ public class TomcatHTTPServerEngine implements ServerEngine {
                 String filterName = filterClass.getName();
                 FilterDef def = new FilterDef();
                 def.setFilterName(filterName);
-                def.setFilter( handler );
-                context.addFilterDef( def );
+                def.setFilter(handler);
+                context.addFilterDef(def);
                 FilterMap map = new FilterMap();
-                map.setFilterName( filterName );
-                map.addURLPattern( urlPattern );
-                context.addFilterMap( map );
+                map.setFilterName(filterName);
+                map.addURLPattern(urlPattern);
+                context.addFilterMap(map);
 
                 Tomcat.addServlet(context, servletName, new CxfTomcatServlet());
                 context.addServletMappingDecoded(urlPattern, servletName);
@@ -282,7 +257,7 @@ public class TomcatHTTPServerEngine implements ServerEngine {
 
                 startDaemonAwaitThread();
             } catch (Exception e) {
-                LOG.log(Level.SEVERE, "START_UP_SERVER_FAILED_MSG", new Object[] {e.getMessage(), port});
+                LOG.log(Level.SEVERE, "START_UP_SERVER_FAILED_MSG", new Object[]{e.getMessage(), port});
                 //problem starting server
                 try {
                     server.stop();
@@ -313,7 +288,7 @@ public class TomcatHTTPServerEngine implements ServerEngine {
         final String smap = HttpUriMapper.getResourceBase(url.getPath());
         handler.setName(smap);
         System.out.println("123123");
-        registedPaths.add(url.getPath());
+        registedPaths.put(url.getPath(), handler);
         servantCount = servantCount + 1;
     }
 
@@ -332,7 +307,7 @@ public class TomcatHTTPServerEngine implements ServerEngine {
     protected void checkRegistedContext(URL url) {
 
         String path = url.getPath();
-        for (String registedPath : registedPaths) {
+        for (String registedPath : registedPaths.keySet()) {
             if (path.equals(registedPath)) {
                 throw new Fault(new Message("ADD_HANDLER_CONTEXT_IS_USED_MSG", LOG, url, registedPath));
             }
@@ -430,8 +405,7 @@ public class TomcatHTTPServerEngine implements ServerEngine {
             tempDir.mkdir();
             tempDir.deleteOnExit();
             return tempDir;
-        }
-        catch (IOException ex) {
+        } catch (IOException ex) {
             throw new IllegalArgumentException(
                     "Unable to create tempDir. java.io.tmpdir is set to "
                             + System.getProperty("java.io.tmpdir"),
@@ -486,10 +460,10 @@ public class TomcatHTTPServerEngine implements ServerEngine {
         //test things in the same VM.
         // todo investigate this property
         String s = SystemPropertyAction
-                .getPropertyOrNull("org.apache.cxf.transports.http_undertow.DontClosePort." + port);
+                .getPropertyOrNull("org.apache.cxf.transports.http_tomcat.DontClosePort." + port);
         if (s == null) {
             s = SystemPropertyAction
-                    .getPropertyOrNull("org.apache.cxf.transports.http_undertow.DontClosePort");
+                    .getPropertyOrNull("org.apache.cxf.transports.http_tomcat.DontClosePort");
         }
         return !Boolean.valueOf(s);
     }
@@ -532,7 +506,7 @@ public class TomcatHTTPServerEngine implements ServerEngine {
     private void checkConnectorPort() throws IOException {
         try {
             if (null != connector) {
-                int cp = ((Connector)connector).getPort();
+                int cp = (connector).getPort();
                 if (port != cp) {
                     throw new IOException("Error: Connector port " + cp + " does not match"
                             + " with the server engine port " + port);

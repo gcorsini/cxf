@@ -1,18 +1,22 @@
 package org.apache.cxf.transport.http_tomcat;
 
-import org.apache.catalina.Valve;
 import org.apache.catalina.connector.RequestFacade;
 import org.apache.cxf.Bus;
+import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.transport.http.HttpUrlUtil;
 
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class TomcatHTTPHandler implements Filter {
 
     private static final String METHOD_TRACE = "TRACE";
+    private static final Logger LOG =
+            LogUtils.getL7dLogger(TomcatHTTPDestination.class);
 
     protected TomcatHTTPDestination tomcatHTTPDestination;
     protected ServletContext servletContext;
@@ -50,14 +54,11 @@ public class TomcatHTTPHandler implements Filter {
 
     public void handle(String target, RequestFacade facade, HttpServletRequest request,
                        HttpServletResponse response) throws IOException, ServletException {
+        LOG.log(Level.FINE, "Handling incoming message");
         if (request.getMethod().equals(METHOD_TRACE)) {
-            // todo implement me
-
-            // Might be needed (based on Jetty implementation)
             request.setAttribute("HTTP_HANDLER", this);
             request.setAttribute("TOMCAT_DESTINATION", tomcatHTTPDestination);
 
-//            baseRequest.setHandled(true);
             response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
         } else {
             if (contextMatchExact) {
@@ -97,5 +98,8 @@ public class TomcatHTTPHandler implements Filter {
     @Override
     public void destroy() {
         System.out.println("Im in destroy method");
+        this.tomcatHTTPDestination = null;
+        this.servletContext = null;
+        this.urlName = null;
     }
 }

@@ -22,15 +22,12 @@ import org.apache.catalina.Context;
 import org.apache.catalina.servlets.DefaultServlet;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.cxf.Bus;
-import org.apache.cxf.bus.managers.DestinationFactoryManagerImpl;
 import org.apache.cxf.endpoint.ServerImpl;
 import org.apache.cxf.endpoint.ServerRegistry;
 import org.apache.cxf.helpers.IOUtils;
 import org.apache.cxf.testutil.common.TestUtil;
-import org.apache.cxf.transport.http_tomcat.TomcatDestinationFactory;
 import org.apache.cxf.transport.http_tomcat.TomcatHTTPDestination;
 import org.apache.cxf.transport.http_tomcat.TomcatHTTPServerEngine;
-import org.apache.tomcat.util.descriptor.web.FilterDef;
 import org.junit.Test;
 import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
 import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
@@ -73,21 +70,8 @@ public class TomcatEngineLifecycleTest {
         server.addServlet("/jsunit", "defaultServlet", new DefaultServlet());
         context.addServletMappingDecoded("/jsunit", "defaultServlet");
 
-/*        FilterDef[] filters = context.findFilterDefs();
-        for (int i = 0; i < filters.length; i++) {
-            System.out.println("Filter: " + filters[i].getFilter());
-        }*/
-
-//        for (Handler h : server.getChildHandlersByClass(WebAppContext.class)) {
-//            WebAppContext wac = (WebAppContext) h;
-//            if ("/jsunit".equals(wac.getContextPath())) {
-//                wac.addServlet("org.eclipse.jetty.servlet.DefaultServlet", "/bloop");
-//                break;
-//            }
-//        }
 
         try {
-            verifyStaticHtml();
             invokeService();
         } finally {
             shutdownService();
@@ -99,7 +83,6 @@ public class TomcatEngineLifecycleTest {
         for (int i = 0; i < 2; ++i) { // twice
             setUpBus();
             try {
-                verifyStaticHtml();
                 invokeService();
                 invokeService8801();
             } finally {
@@ -132,9 +115,7 @@ public class TomcatEngineLifecycleTest {
     }
 
     private void invokeService() {
-        System.out.println("Invoking a service");
         DummyInterface client = (DummyInterface) applicationContext.getBean("dummy-client");
-        System.out.println("Got a bean, invocating");
         String hello_world = client.echoTomcat("hello world");
         assertEquals("We should get out put from this client", "hello world", hello_world);
     }
