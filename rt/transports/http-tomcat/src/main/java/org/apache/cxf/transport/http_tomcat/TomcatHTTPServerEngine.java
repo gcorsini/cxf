@@ -42,6 +42,7 @@ import javax.servlet.Filter;
 import javax.servlet.ServletContext;
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -383,7 +384,7 @@ public class TomcatHTTPServerEngine implements ServerEngine {
     private void createContext(URL url, TomcatHTTPHandler handler) {
         // context handling
         File docBase = new File(System.getProperty("java.io.tmpdir"));
-        docBase = createTempDir(server.getHost().getName());
+        //docBase = createTempDir(server.getHost().getName());
         Context context = server.addContext(HttpUriMapper.getContextName(url.getPath()), docBase.getAbsolutePath());
 
         // Get servlet name from handler
@@ -508,6 +509,16 @@ public class TomcatHTTPServerEngine implements ServerEngine {
 
     public void stop() {
         if (this.server != null) {
+/*            // TODO: Ivan please check if this is ok?
+            for (String urlStr : registeredPaths.keySet()) {
+                try {
+                    URL url = new URL(getProtocol()+"://"+getHost()+urlStr);
+                    removeServant(url);
+                } catch (MalformedURLException e) {
+                    System.out.println("Failed to remove leftover servants");
+                    e.printStackTrace();
+                }
+            }*/
             try {
                 this.server.stop();
                 this.server.destroy();

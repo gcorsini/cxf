@@ -165,8 +165,6 @@ public class TomcatHTTPServerEngineTest {
         response = getResponse(urlStr2);
         assertEquals("The tomcat http handler did not take effect", response, "string2");
 
-        factory.destroyForPort(PORT1);
-
         /*Thread.sleep(1000);
         serverEngine.stop();*/
     }
@@ -188,11 +186,6 @@ public class TomcatHTTPServerEngineTest {
         assertTrue(
                 "Engine references for the same port should point to the same instance",
                 engine == factory.retrieveTomcatHTTPServerEngine(PORT1));
-
-        TomcatHTTPServerEngineFactory.destroyForPort(PORT1);
-
-        engine = factory.retrieveTomcatHTTPServerEngine(PORT1);
-        assertNull("Engine should have been destroyed.", engine);
     }
 
     @Test
@@ -218,8 +211,6 @@ public class TomcatHTTPServerEngineTest {
         } catch (Exception ex) {
             fail("Can't get the reponse from the server " + ex);
         }
-        engine.stop();
-        TomcatHTTPServerEngineFactory.destroyForPort(PORT2);
     }
 
     @Test
@@ -263,7 +254,6 @@ public class TomcatHTTPServerEngineTest {
             fail("Can't get the reponse from the server " + ex);
         }
         assertEquals("the tomcat http handler did not take effect", response, "string2");
-        TomcatHTTPServerEngineFactory.destroyForPort(PORT1);
     }
 
     @Test
@@ -289,15 +279,11 @@ public class TomcatHTTPServerEngineTest {
             fail("Can't get the reponse from the server " + ex);
         }
         assertEquals("the tomcat http handler did not take effect", response, "test");
-
-        TomcatHTTPServerEngineFactory.destroyForPort(PORT3);
     }
 
 
     @Test
     public void testTomcatHTTPHandlerContextMatchExactTrue() throws Exception {
-        //fail("Test empty");
-
         String urlStr1 = "http://localhost:" + PORT3 + "/hello/test1";
         TomcatHTTPServerEngine engine =
                 factory.createTomcatHTTPServerEngine(PORT3, "http");
@@ -317,8 +303,6 @@ public class TomcatHTTPServerEngineTest {
             fail("Can't get the reponse from the server " + ex);
         }
         assertEquals("the tomcat http handler did not take effect", response, "test");
-
-        TomcatHTTPServerEngineFactory.destroyForPort(PORT3);
     }
 
     @Test
@@ -400,9 +384,6 @@ public class TomcatHTTPServerEngineTest {
         s = CastUtils.cast(ManagementFactory.getPlatformMBeanServer().
                 queryNames(new ObjectName("org.xnio:type=Xnio,provider=\"nio\",worker=\"*\""), null));
         assertEquals("Could not find 0 Tomcat Server: " + s, 0, s.size());
-
-        TomcatHTTPServerEngineFactory.destroyForPort(PORT1);
-        TomcatHTTPServerEngineFactory.destroyForPort(PORT2);
     }
 
     @Test
@@ -423,8 +404,6 @@ public class TomcatHTTPServerEngineTest {
         response = getResponse(urlStr);
         assertEquals("The tomcat http handler failed to connect on https", response, "Testing https settings");
         System.out.println(response);
-
-        TomcatHTTPServerEngineFactory.destroyForPort(PORT1);
 
     }
 
@@ -466,23 +445,28 @@ public class TomcatHTTPServerEngineTest {
         assertTrue("Protocol must be https",
                 "https".equals(engine.getProtocol()));
 
-        getResponse("https://localhost:" + PORT2 + "/test");
+        String response = null;
+        response = getResponse("https://localhost:" + PORT2 + "/test");
+        assertEquals("The tomcat http handler failed to connect on https", response, "string1");
+        System.out.println(response);
 
-        TomcatHTTPServerEngineFactory.destroyForPort(PORT1);
-        TomcatHTTPServerEngineFactory.destroyForPort(PORT2);
-        TomcatHTTPServerEngineFactory.destroyForPort(PORT3);
-
-        /*engine.setTlsServerParameters(null);
-        engine.finalizeConfig();*/
     }
 
     @After
     public void reset() throws Exception {
-        factory.setTLSServerParametersForPort(PORT1, null);
-        factory.setTLSServerParametersForPort(PORT2, null);
-        factory.setTLSServerParametersForPort(PORT3, null);
-        factory.setTLSServerParametersForPort(PORT4, null);
-        factory = null;
+        TomcatHTTPServerEngineFactory.destroyForPort(PORT1);
+        TomcatHTTPServerEngineFactory.destroyForPort(PORT2);
+        TomcatHTTPServerEngineFactory.destroyForPort(PORT3);
+        TomcatHTTPServerEngineFactory.destroyForPort(PORT4);
+
+        TomcatHTTPServerEngine engine = factory.retrieveTomcatHTTPServerEngine(PORT1);
+        assertNull("Engine should have been destroyed.", engine);
+        engine = factory.retrieveTomcatHTTPServerEngine(PORT2);
+        assertNull("Engine should have been destroyed.", engine);
+        engine = factory.retrieveTomcatHTTPServerEngine(PORT3);
+        assertNull("Engine should have been destroyed.", engine);
+        engine = factory.retrieveTomcatHTTPServerEngine(PORT4);
+        assertNull("Engine should have been destroyed.", engine);
     }
 
     private String getResponse(String target) throws Exception {

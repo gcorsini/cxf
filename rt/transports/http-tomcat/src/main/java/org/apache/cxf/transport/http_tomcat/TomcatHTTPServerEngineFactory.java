@@ -184,9 +184,9 @@ public class TomcatHTTPServerEngineFactory {
             String host,
             int port,
             TLSServerParameters tlsParams) throws GeneralSecurityException, IOException {
-/*        if (tlsParams == null) {
+        if (tlsParams == null) {
             throw new IllegalArgumentException("tlsParams cannot be null");
-        }*/
+        }
         TomcatHTTPServerEngine ref = retrieveTomcatHTTPServerEngine(port);
         if (null == ref) {
             getOrCreate(this, host, port, tlsParams);
