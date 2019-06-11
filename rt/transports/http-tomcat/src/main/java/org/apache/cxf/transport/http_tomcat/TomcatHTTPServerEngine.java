@@ -35,12 +35,16 @@ import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.transport.HttpUriMapper;
 import org.apache.tomcat.util.descriptor.web.FilterDef;
 import org.apache.tomcat.util.descriptor.web.FilterMap;
+import org.apache.tomcat.util.net.SSLHostConfig;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.Filter;
+import javax.servlet.ServletContext;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -76,14 +80,14 @@ public class TomcatHTTPServerEngine implements ServerEngine {
     private Tomcat server;
     private Connector connector;
     private List<Filter> handlers;
-    private ConcurrentMap<String, TomcatHTTPHandler> registedPaths =
+    private ConcurrentMap<String, TomcatHTTPHandler> registeredPaths =
             new ConcurrentHashMap<>();
     private int backgroundProcessorDelay;
     private String host;
 
     /**
      * This field holds the TLS ServerParameters that are programatically
-     * configured. The tlsServerParamers (due to JAXB) holds the struct
+     * configured. The tlsServerParameters (due to JAXB) holds the struct
      * placed by SpringConfig.
      */
     private TLSServerParameters tlsServerParameters;
@@ -113,9 +117,9 @@ public class TomcatHTTPServerEngine implements ServerEngine {
     public void removeServant(URL url) {
         LifecycleState state = server.getEngine().getState();
         if (server != null && state == LifecycleState.STARTED) {
-            TomcatHTTPHandler tomcatHTTPHandler = registedPaths.get(url.getPath());
+            TomcatHTTPHandler tomcatHTTPHandler = registeredPaths.get(url.getPath());
             tomcatHTTPHandler.destroy();
-            TomcatHTTPHandler handler = registedPaths.remove(url.getPath());
+            TomcatHTTPHandler handler = registeredPaths.remove(url.getPath());
             if (handler == null) {
                 return;
             }
@@ -125,7 +129,8 @@ public class TomcatHTTPServerEngine implements ServerEngine {
 
     @Override
     public TomcatHTTPHandler getServant(URL url) {
-        return null;
+        TomcatHTTPHandler handler = registeredPaths.getOrDefault(url.getPath(), null);
+        return handler;
     }
 
     @Override
@@ -137,26 +142,97 @@ public class TomcatHTTPServerEngine implements ServerEngine {
         if (server == null) {
             try {
                 // create a new tomcat server instance if there is no server there
-                //Tomcat tomcat = new Tomcat();
                 server = new Tomcat();
                 server.setHostname("localhost");
                 String appBase = ".";
                 server.getHost().setAppBase(appBase);
 
-                Connector connector = new Connector("org.apache.coyote.http11.Http11NioProtocol");
+                // make a method out of it to simplify the code
+                connector = new Connector("org.apache.coyote.http11.Http11NioProtocol");
                 connector.setPort(getPort());
 
 //                int port = (getPort() >= 0) ? getPort() : 0;
 //                connector.setPort(port);
                 Http11NioProtocol protocol = (Http11NioProtocol) connector.getProtocolHandler();
-                // Use HTTPS
-                //connector.setScheme("https");
-                //connector.setSecure(true);
-                //protocol.setSSLEnabled(true);
-                //protocol.setKeyAlias("tomcat?");
-                //protocol.setKeystorePass("?");
-                //protocol.setKeystoreFile();
-                //protocol.setSslProtocol("TLS");
+                if (tlsServerParameters != null) {
+/*                    // get desired protocol
+                    String proto = (tlsServerParameters.getSecureSocketProtocol() == null) ?
+                            tlsServerParameters.getSecureSocketProtocol() : "https";
+                    // exclude specified protocols
+                    for (String p : tlsServerParameters.getExcludeProtocols()) {
+                        //protocol.setSslEnabledProtocols(p);
+                        //scf.addExcludeProtocols(p);
+                    }
+                    // include specified protocols
+                    for (String p : tlsServerParameters.getIncludeProtocols()) {
+                        protocol.setSslEnabledProtocols(p);
+                        //scf.addExcludeProtocols(p);
+                    }
+                    SSLContext context = tlsServerParameters.getJsseProvider() == null
+                            ? SSLContext.getInstance(proto)
+                            : SSLContext.getInstance(proto, tlsServerParameters.getJsseProvider());
+
+                    KeyManager[] keyManagers = tlsServerParameters.getKeyManagers();
+                    KeyManager[] configuredKeyManagers = org.apache.cxf.transport.https.SSLUtils.configureKeyManagersWithCertAlias(
+                            tlsServerParameters, keyManagers);
+
+                    context.init(configuredKeyManagers,
+                            tlsServerParameters.getTrustManagers(),
+                            tlsServerParameters.getSecureRandom());
+
+                    // Set the CipherSuites
+                    final String[] supportedCipherSuites =
+                            SSLUtils.getServerSupportedCipherSuites(context);
+
+                    if (tlsServerParameters.getCipherSuitesFilter() != null
+                            && tlsServerParameters.getCipherSuitesFilter().isSetExclude()) {
+                        String[] excludedCipherSuites =
+                                SSLUtils.getFilteredCiphersuites(tlsServerParameters.getCipherSuitesFilter(),
+                                        supportedCipherSuites,
+                                        LOG,
+                                        true);
+                        scf.setExcludeCipherSuites(excludedCipherSuites);
+                    }
+
+                    String[] includedCipherSuites =
+                            SSLUtils.getCiphersuitesToInclude(tlsServerParameters.getCipherSuites(),
+                                    tlsServerParameters.getCipherSuitesFilter(),
+                                    context.getServerSocketFactory().getDefaultCipherSuites(),
+                                    supportedCipherSuites,
+                                    LOG);
+                    scf.setIncludeCipherSuites(includedCipherSuites);*/
+
+                    // Use HTTPS
+                    SSLHostConfig sslHostConfig = new SSLHostConfig();
+                    sslHostConfig.setCertificateKeyAlias("tomcat");
+/*
+                    Path currentRelativePath = Paths.get("");
+                    String s = currentRelativePath.toAbsolutePath().toString();
+                    System.out.println("Current relative path is: " + s);
+*/
+                    sslHostConfig.setCertificateKeystoreFile("/home/gc/Documents/2019FS/RandDworkshop/project/cxf_new/rt/transports/http-tomcat/src/test/resources/keystore");
+                    sslHostConfig.setCertificateKeystorePassword("changeit");
+                    sslHostConfig.setCertificateKeyPassword("changeit");
+                    System.out.println("SSLHostConfig: " + sslHostConfig);
+
+                    /*SSLHostConfigCertificate certificate = new SSLHostConfigCertificate();
+                    certificate.setCertificateKeyAlias("tomcat");
+                    certificate.setCertificateKeystoreFile("/home/gc/Documents/2019FS/RandDworkshop/project/cxf_new/rt/transports/http-tomcat/src/test/resources/keystore");
+                    certificate.setCertificateKeyPassword("changeit");
+                    sslHostConfig.addCertificate(certificate);*/
+                    connector.addSslHostConfig(sslHostConfig);
+                    connector.setScheme("https");
+                    connector.setSecure(true);
+                    protocol.setSSLEnabled(true);
+                    //protocol.setClientAuth("false");
+                    protocol.setSSLProtocol("TLS");
+
+//                    protocol.setSslProtocol("TLSv1");
+                    // TODO: check keystore /add entry to keystore
+                    //protocol.setKeyAlias("tomcat?");
+                    //protocol.setKeystorePass("?");
+                    //protocol.setKeystoreFile();
+                }
 //                protocol.setAddress(InetAddress.getLocalHost());
 
                 // add connector to server
@@ -225,33 +301,10 @@ public class TomcatHTTPServerEngine implements ServerEngine {
                     server.setHandler(contexts);
                 }
 */
-                //prepareContext(tomcat.getHost(), tomcat);
-                //prepareContext(server.getHost(), server);
 
-                // context handling
-                File docBase = new File(System.getProperty("java.io.tmpdir"));
-                Context context = server.addContext("", docBase.getAbsolutePath());
-
-                //Get the URL Pattern from the input url string
-                String urlPattern = url.getPath();
 
                 // TODO: Get servlet name from handler??
-                String servletName = "tomcatServlet";
-
-                Class filterClass = handler.getClass();
-                String filterName = filterClass.getName();
-                FilterDef def = new FilterDef();
-                def.setFilterName(filterName);
-                def.setFilter(handler);
-                context.addFilterDef(def);
-                FilterMap map = new FilterMap();
-                map.setFilterName(filterName);
-                map.addURLPattern(urlPattern);
-                context.addFilterMap(map);
-
-                Tomcat.addServlet(context, servletName, new CxfTomcatServlet());
-                context.addServletMappingDecoded(urlPattern, servletName);
-
+                createContext(url, handler, "tomcatServlet");
 
                 server.start();
 
@@ -269,6 +322,9 @@ public class TomcatHTTPServerEngine implements ServerEngine {
             }
 
         } else {
+            // TODO: Get servlet name from handler??
+            //createContext(url, handler, "tomcatServlet2");
+
 //            String contextName = HttpUriMapper.getContextName(url.getPath());
 //            try {
 //                servletContext = buildServletContext(contextName);
@@ -288,7 +344,7 @@ public class TomcatHTTPServerEngine implements ServerEngine {
         final String smap = HttpUriMapper.getResourceBase(url.getPath());
         handler.setName(smap);
         System.out.println("123123");
-        registedPaths.put(url.getPath(), handler);
+        registeredPaths.put(url.getPath(), handler);
         servantCount = servantCount + 1;
     }
 
@@ -307,7 +363,7 @@ public class TomcatHTTPServerEngine implements ServerEngine {
     protected void checkRegistedContext(URL url) {
 
         String path = url.getPath();
-        for (String registedPath : registedPaths.keySet()) {
+        for (String registedPath : registeredPaths.keySet()) {
             if (path.equals(registedPath)) {
                 throw new Fault(new Message("ADD_HANDLER_CONTEXT_IS_USED_MSG", LOG, url, registedPath));
             }
@@ -321,6 +377,31 @@ public class TomcatHTTPServerEngine implements ServerEngine {
             }
         }
 
+    }
+
+    private void createContext(URL url, TomcatHTTPHandler handler, String servletName) {
+        // context handling
+        File docBase = new File(System.getProperty("java.io.tmpdir"));
+        Context context = server.addContext(HttpUriMapper.getContextName(url.getPath()), docBase.getAbsolutePath());
+
+
+        Class filterClass = handler.getClass();
+        String filterName = filterClass.getName();
+        FilterDef def = new FilterDef();
+        def.setFilterName(filterName);
+        def.setFilter(handler);
+        context.addFilterDef(def);
+        FilterMap map = new FilterMap();
+        map.setFilterName(filterName);
+        //Get the URL Pattern from the input url string depending depending on exact or only context
+        String urlPattern = url.getPath().replaceFirst(HttpUriMapper.getContextName(url.getPath()), "");
+        urlPattern = handler.isContextMatchExact() ? urlPattern : urlPattern + "/*";
+        map.addURLPattern(urlPattern);
+        context.addFilterMap(map);
+
+        //Tomcat.addServlet(context, servletName, new CxfTomcatServlet());
+        server.addServlet(context, servletName, new CxfTomcatServlet());
+        context.addServletMappingDecoded(urlPattern, servletName);
     }
 
 /*
@@ -438,7 +519,7 @@ public class TomcatHTTPServerEngine implements ServerEngine {
      * remove it from the factory's cache.
      */
     public void shutdown() {
-        registedPaths.clear();
+        registeredPaths.clear();
         if (shouldDestroyPort()) {
             if (servantCount == 0) {
                 TomcatHTTPServerEngineFactory.destroyForPort(port);

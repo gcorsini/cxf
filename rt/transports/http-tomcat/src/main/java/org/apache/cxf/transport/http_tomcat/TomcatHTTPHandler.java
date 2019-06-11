@@ -19,7 +19,7 @@ public class TomcatHTTPHandler implements Filter {
             LogUtils.getL7dLogger(TomcatHTTPDestination.class);
 
     protected TomcatHTTPDestination tomcatHTTPDestination;
-    protected ServletContext servletContext;
+    //protected ServletContext servletContext;
     private String urlName;
     private boolean contextMatchExact;
     private Bus bus;
@@ -33,7 +33,7 @@ public class TomcatHTTPHandler implements Filter {
         this.bus = bus;
     }
 
-    public ServletContext getServletContext() {
+/*    public ServletContext getServletContext() {
         return servletContext;
     }
 
@@ -42,7 +42,7 @@ public class TomcatHTTPHandler implements Filter {
         if (tomcatHTTPDestination != null) {
             tomcatHTTPDestination.setServletContext(sc);
         }
-    }
+    }*/
 
     public void setName(String name) {
         urlName = name;
@@ -52,7 +52,7 @@ public class TomcatHTTPHandler implements Filter {
         return urlName;
     }
 
-    public void handle(String target, RequestFacade facade, HttpServletRequest request,
+/*    public void handle(String target, RequestFacade facade, HttpServletRequest request,
                        HttpServletResponse response) throws IOException, ServletException {
         LOG.log(Level.FINE, "Handling incoming message");
         if (request.getMethod().equals(METHOD_TRACE)) {
@@ -72,10 +72,14 @@ public class TomcatHTTPHandler implements Filter {
             }
         }
 
-    }
+    }*/
 
     public Bus getBus() {
         return tomcatHTTPDestination != null ? tomcatHTTPDestination.getBus() : bus;
+    }
+
+    public boolean isContextMatchExact() {
+        return this.contextMatchExact;
     }
 
     @Override
@@ -99,7 +103,7 @@ public class TomcatHTTPHandler implements Filter {
     public void destroy() {
         System.out.println("Im in destroy method");
         this.tomcatHTTPDestination = null;
-        this.servletContext = null;
+        //this.servletContext = null;
         this.urlName = null;
     }
 }

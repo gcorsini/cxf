@@ -19,15 +19,12 @@
 
 package org.apache.cxf.transport.http_tomcat;
 
-import org.apache.catalina.connector.RequestFacade;
 import org.apache.cxf.transport.http.HttpUrlUtil;
-
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 public class TomcatHTTPTestHandler extends TomcatHTTPHandler {
@@ -41,28 +38,7 @@ public class TomcatHTTPTestHandler extends TomcatHTTPHandler {
     }
 
     @Override
-    public void handle(String target,
-                       RequestFacade baseRequest,
-                       HttpServletRequest request,
-                       HttpServletResponse resp) throws IOException, ServletException {
-
-        System.out.println("123123123");
-
-        if (contextMatchExact) {
-            // just return the response for testing
-            resp.getOutputStream().write(response.getBytes());
-            resp.flushBuffer();
-
-        } else {
-            if (target.equals(getName()) || HttpUrlUtil.checkContextPath(getName(), target)) {
-                resp.getOutputStream().write(response.getBytes());
-                resp.flushBuffer();
-            }
-        }
-    }
-
-    @Override
-    public void doFilter(ServletRequest request, ServletResponse resp, FilterChain chain) throws IOException, ServletException {
+    public void doFilter(ServletRequest request, ServletResponse resp, FilterChain chain) throws IOException {
         System.out.println("In TomcatHTTPTestHandler inside filter method");
         if (contextMatchExact) {
             // just return the response for testing
@@ -70,7 +46,9 @@ public class TomcatHTTPTestHandler extends TomcatHTTPHandler {
             resp.flushBuffer();
 
         } else {
-            String target =((HttpServletRequest) ((ServletRequest) request)).getPathInfo();
+            String contextPath = ((HttpServletRequest) request).getContextPath();
+            String fullURI = ((HttpServletRequest) request).getRequestURI();
+            String target = fullURI.replaceFirst(contextPath, "");
             if (target.equals(getName()) || HttpUrlUtil.checkContextPath(getName(), target)) {
                 resp.getOutputStream().write(response.getBytes());
                 resp.flushBuffer();
