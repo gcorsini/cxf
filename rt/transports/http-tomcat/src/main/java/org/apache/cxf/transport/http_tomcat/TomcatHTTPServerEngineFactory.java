@@ -176,7 +176,7 @@ public class TomcatHTTPServerEngineFactory {
      * @param host      if not null, server will listen on this address/host,
      *                  otherwise, server will listen on all local addresses.
      * @param port      The network port number to bind to the engine.
-     * @param tlsParams The tls server parameters. Cannot be null.
+     * @param tlsParams The tls server parameters. Not anymore: Cannot be null.
      * @throws IOException
      * @throws GeneralSecurityException
      */
@@ -184,9 +184,9 @@ public class TomcatHTTPServerEngineFactory {
             String host,
             int port,
             TLSServerParameters tlsParams) throws GeneralSecurityException, IOException {
-        if (tlsParams == null) {
+/*        if (tlsParams == null) {
             throw new IllegalArgumentException("tlsParams cannot be null");
-        }
+        }*/
         TomcatHTTPServerEngine ref = retrieveTomcatHTTPServerEngine(port);
         if (null == ref) {
             getOrCreate(this, host, port, tlsParams);

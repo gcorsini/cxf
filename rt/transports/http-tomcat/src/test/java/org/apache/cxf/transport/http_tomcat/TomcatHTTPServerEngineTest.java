@@ -14,6 +14,7 @@ import org.apache.cxf.testutil.common.TestUtil;
 import org.apache.tomcat.util.descriptor.web.ContextHandler;
 import org.easymock.EasyMock;
 import org.easymock.IMocksControl;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -78,73 +79,6 @@ public class TomcatHTTPServerEngineTest {
         TomcatHTTPServerEngine serverEngine = new TomcatHTTPServerEngine(8080);
     }
 
-    @Test
-    public void testHttps() throws Exception {
-        //fail("Test empty");
-
-        String urlStr = "https://localhost:" + PORT1 + "/hello/test";
-
-        factory.setTLSServerParametersForPort(PORT1, new TLSServerParameters());
-        TomcatHTTPServerEngine engine =
-                factory.createTomcatHTTPServerEngine(PORT1, "https");
-
-        assertTrue("Protocol must be http", "https".equals(engine.getProtocol()));
-        TomcatHTTPTestHandler handler = new TomcatHTTPTestHandler("Testing https settings", false);
-        engine.addServant(new URL(urlStr), handler);
-
-        String response = null;
-        response = getResponse(urlStr);
-        assertEquals("The tomcat http handler failed to connect on https", response, "Testing https settings");
-        System.out.println(response);
-
-        TomcatHTTPServerEngineFactory.destroyForPort(PORT1);
-
-    }
-
-    @Test
-    public void testHttpAndHttps() throws Exception {
-        fail("Test empty");
-
-        TomcatHTTPServerEngine engine =
-                factory.createTomcatHTTPServerEngine(PORT1, "http");
-
-        assertTrue("Protocol must be http",
-                "http".equals(engine.getProtocol()));
-
-        engine = new TomcatHTTPServerEngine();
-        engine.setPort(PORT2);
-        engine.setMaxIdleTime(30000);
-        engine.setTlsServerParameters(new TLSServerParameters());
-        engine.finalizeConfig();
-
-        List<TomcatHTTPServerEngine> list = new ArrayList<>();
-        list.add(engine);
-        factory.setEnginesList(list);
-        engine = factory.createTomcatHTTPServerEngine(PORT2, "https");
-        TomcatHTTPTestHandler handler1 = new TomcatHTTPTestHandler("string1", true);
-        // need to create a servant to create the connector
-        engine.addServant(new URL("https://localhost:" + PORT2 + "/test"), handler1);
-        assertTrue("Protocol must be https",
-                "https".equals(engine.getProtocol()));
-
-//        assertEquals("Get the wrong maxIdleTime.", 30000, getMaxIdle(engine.getConnector()));
-
-        factory.setTLSServerParametersForPort(PORT1, new TLSServerParameters());
-        engine = factory.createTomcatHTTPServerEngine(PORT1, "https");
-        assertTrue("Protocol must be https",
-                "https".equals(engine.getProtocol()));
-
-        factory.setTLSServerParametersForPort(PORT3, new TLSServerParameters());
-        engine = factory.createTomcatHTTPServerEngine(PORT3, "https");
-        assertTrue("Protocol must be https",
-                "https".equals(engine.getProtocol()));
-
-        getResponse("https://localhost:" + PORT2 + "/test");
-
-        TomcatHTTPServerEngineFactory.destroyForPort(PORT1);
-        TomcatHTTPServerEngineFactory.destroyForPort(PORT2);
-        TomcatHTTPServerEngineFactory.destroyForPort(PORT3);
-    }
 
 
     @Test
@@ -230,7 +164,7 @@ public class TomcatHTTPServerEngineTest {
         //serverEngine.shutdown();
         response = getResponse(urlStr2);
         assertEquals("The tomcat http handler did not take effect", response, "string2");
-        // set the get request
+
         factory.destroyForPort(PORT1);
 
         /*Thread.sleep(1000);
@@ -256,10 +190,14 @@ public class TomcatHTTPServerEngineTest {
                 engine == factory.retrieveTomcatHTTPServerEngine(PORT1));
 
         TomcatHTTPServerEngineFactory.destroyForPort(PORT1);
+
+        engine = factory.retrieveTomcatHTTPServerEngine(PORT1);
+        assertNull("Engine should have been destroyed.", engine);
     }
 
     @Test
     public void testSetHandlers() throws Exception {
+        fail("Test not needed?!");
         URL url = new URL("http://localhost:" + PORT2 + "/hello/test");
         TomcatHTTPTestHandler handler1 = new TomcatHTTPTestHandler("string1", true);
         TomcatHTTPTestHandler handler2 = new TomcatHTTPTestHandler("string2", true);
@@ -286,7 +224,7 @@ public class TomcatHTTPServerEngineTest {
 
     @Test
     public void testGetContextHandler() throws Exception {
-        //fail("Test empty");
+        fail("Test not needed?!");
 
         String urlStr = "http://localhost:" + PORT1 + "/hello/test";
         TomcatHTTPServerEngine engine =
@@ -324,7 +262,7 @@ public class TomcatHTTPServerEngineTest {
         } catch (Exception ex) {
             fail("Can't get the reponse from the server " + ex);
         }
-        assertEquals("the jetty http handler did not take effect", response, "string2");
+        assertEquals("the tomcat http handler did not take effect", response, "string2");
         TomcatHTTPServerEngineFactory.destroyForPort(PORT1);
     }
 
@@ -467,6 +405,85 @@ public class TomcatHTTPServerEngineTest {
         TomcatHTTPServerEngineFactory.destroyForPort(PORT2);
     }
 
+    @Test
+    public void testHttps() throws Exception {
+        //fail("Test empty");
+
+        String urlStr = "https://localhost:" + PORT1 + "/hello/test";
+
+        factory.setTLSServerParametersForPort(PORT1, new TLSServerParameters());
+        TomcatHTTPServerEngine engine =
+                factory.createTomcatHTTPServerEngine(PORT1, "https");
+
+        assertTrue("Protocol must be http", "https".equals(engine.getProtocol()));
+        TomcatHTTPTestHandler handler = new TomcatHTTPTestHandler("Testing https settings", false);
+        engine.addServant(new URL(urlStr), handler);
+
+        String response = null;
+        response = getResponse(urlStr);
+        assertEquals("The tomcat http handler failed to connect on https", response, "Testing https settings");
+        System.out.println(response);
+
+        TomcatHTTPServerEngineFactory.destroyForPort(PORT1);
+
+    }
+
+    @Test
+    public void testHttpAndHttps() throws Exception {
+        fail("Test empty");
+
+        TomcatHTTPServerEngine engine =
+                factory.createTomcatHTTPServerEngine(PORT1, "http");
+
+        assertTrue("Protocol must be http",
+                "http".equals(engine.getProtocol()));
+
+        engine = new TomcatHTTPServerEngine();
+        engine.setPort(PORT2);
+        engine.setMaxIdleTime(30000);
+        engine.setTlsServerParameters(new TLSServerParameters());
+        engine.finalizeConfig();
+
+        List<TomcatHTTPServerEngine> list = new ArrayList<>();
+        list.add(engine);
+        factory.setEnginesList(list);
+        engine = factory.createTomcatHTTPServerEngine(PORT2, "https");
+        TomcatHTTPTestHandler handler1 = new TomcatHTTPTestHandler("string1", true);
+        // need to create a servant to create the connector
+        engine.addServant(new URL("https://localhost:" + PORT2 + "/test"), handler1);
+        assertTrue("Protocol must be https",
+                "https".equals(engine.getProtocol()));
+
+//        assertEquals("Get the wrong maxIdleTime.", 30000, getMaxIdle(engine.getConnector()));
+
+        factory.setTLSServerParametersForPort(PORT1, new TLSServerParameters());
+        engine = factory.createTomcatHTTPServerEngine(PORT1, "https");
+        assertTrue("Protocol must be https",
+                "https".equals(engine.getProtocol()));
+
+        factory.setTLSServerParametersForPort(PORT3, new TLSServerParameters());
+        engine = factory.createTomcatHTTPServerEngine(PORT3, "https");
+        assertTrue("Protocol must be https",
+                "https".equals(engine.getProtocol()));
+
+        getResponse("https://localhost:" + PORT2 + "/test");
+
+        TomcatHTTPServerEngineFactory.destroyForPort(PORT1);
+        TomcatHTTPServerEngineFactory.destroyForPort(PORT2);
+        TomcatHTTPServerEngineFactory.destroyForPort(PORT3);
+
+        /*engine.setTlsServerParameters(null);
+        engine.finalizeConfig();*/
+    }
+
+    @After
+    public void reset() throws Exception {
+        factory.setTLSServerParametersForPort(PORT1, null);
+        factory.setTLSServerParametersForPort(PORT2, null);
+        factory.setTLSServerParametersForPort(PORT3, null);
+        factory.setTLSServerParametersForPort(PORT4, null);
+        factory = null;
+    }
 
     private String getResponse(String target) throws Exception {
         URL url = new URL(target);

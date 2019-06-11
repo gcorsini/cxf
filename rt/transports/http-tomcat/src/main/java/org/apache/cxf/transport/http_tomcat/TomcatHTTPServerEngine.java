@@ -139,6 +139,7 @@ public class TomcatHTTPServerEngine implements ServerEngine {
             checkRegistedContext(url);
         }
 
+        handler.setName(url.getPath());
         if (server == null) {
             try {
                 // create a new tomcat server instance if there is no server there
@@ -204,28 +205,28 @@ public class TomcatHTTPServerEngine implements ServerEngine {
 
                     // Use HTTPS
                     SSLHostConfig sslHostConfig = new SSLHostConfig();
+                    //sslHostConfig.setCertificateKeyAlias("localhost");
                     sslHostConfig.setCertificateKeyAlias("tomcat");
-/*
-                    Path currentRelativePath = Paths.get("");
-                    String s = currentRelativePath.toAbsolutePath().toString();
-                    System.out.println("Current relative path is: " + s);
-*/
+
                     sslHostConfig.setCertificateKeystoreFile("/home/gc/Documents/2019FS/RandDworkshop/project/cxf_new/rt/transports/http-tomcat/src/test/resources/keystore");
+                    //sslHostConfig.setCertificateKeystoreFile("/home/gc/Documents/2019FS/RandDworkshop/tomcat.key");
                     sslHostConfig.setCertificateKeystorePassword("changeit");
                     sslHostConfig.setCertificateKeyPassword("changeit");
-                    System.out.println("SSLHostConfig: " + sslHostConfig);
 
                     /*SSLHostConfigCertificate certificate = new SSLHostConfigCertificate();
                     certificate.setCertificateKeyAlias("tomcat");
                     certificate.setCertificateKeystoreFile("/home/gc/Documents/2019FS/RandDworkshop/project/cxf_new/rt/transports/http-tomcat/src/test/resources/keystore");
                     certificate.setCertificateKeyPassword("changeit");
                     sslHostConfig.addCertificate(certificate);*/
-                    connector.addSslHostConfig(sslHostConfig);
                     connector.setScheme("https");
                     connector.setSecure(true);
+                    connector.addSslHostConfig(sslHostConfig);
+                    // tmp fix
+                    //protocol.setAllowHostHeaderMismatch(true);
                     protocol.setSSLEnabled(true);
-                    //protocol.setClientAuth("false");
-                    protocol.setSSLProtocol("TLS");
+                    protocol.setClientAuth("false");
+                    //protocol.setSSLProtocol("SSL");
+                    //protocol.setSslProtocol("SSL");
 
 //                    protocol.setSslProtocol("TLSv1");
                     // TODO: check keystore /add entry to keystore
@@ -303,8 +304,7 @@ public class TomcatHTTPServerEngine implements ServerEngine {
 */
 
 
-                // TODO: Get servlet name from handler??
-                createContext(url, handler, "tomcatServlet");
+                createContext(url, handler);
 
                 server.start();
 
@@ -324,6 +324,7 @@ public class TomcatHTTPServerEngine implements ServerEngine {
         } else {
             // TODO: Get servlet name from handler??
             //createContext(url, handler, "tomcatServlet2");
+            createContext(url, handler);
 
 //            String contextName = HttpUriMapper.getContextName(url.getPath());
 //            try {
@@ -379,11 +380,14 @@ public class TomcatHTTPServerEngine implements ServerEngine {
 
     }
 
-    private void createContext(URL url, TomcatHTTPHandler handler, String servletName) {
+    private void createContext(URL url, TomcatHTTPHandler handler) {
         // context handling
         File docBase = new File(System.getProperty("java.io.tmpdir"));
+        docBase = createTempDir(server.getHost().getName());
         Context context = server.addContext(HttpUriMapper.getContextName(url.getPath()), docBase.getAbsolutePath());
 
+        // Get servlet name from handler
+        String servletName = handler.getName().replaceFirst("/","").replace("/", "_");
 
         Class filterClass = handler.getClass();
         String filterName = filterClass.getName();
