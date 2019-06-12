@@ -50,18 +50,7 @@ public class CxfTomcatServlet extends AbstractHTTPServlet {
     @Override
     protected void invoke(HttpServletRequest request, HttpServletResponse response) throws ServletException {
 
-        System.out.println("inside tomcat servlet");
-
-/*        try {
-            response.setStatus(HttpServletResponse.SC_OK);
-            response.getWriter().write("inside tomcat servlet");
-            response.getWriter().flush();
-            response.getWriter().close();
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new ServletException(e);
-        }*/
-
+        System.out.println("Inside tomcat servlet.");
 
         TomcatHTTPDestination tomcatHTTPDestination =
                 (TomcatHTTPDestination) request.getAttribute("TOMCAT_DESTINATION");

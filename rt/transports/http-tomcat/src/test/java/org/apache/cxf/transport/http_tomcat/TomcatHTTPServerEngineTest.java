@@ -1,8 +1,6 @@
 package org.apache.cxf.transport.http_tomcat;
 
-import org.apache.catalina.Context;
 import org.apache.catalina.connector.Connector;
-import org.apache.catalina.startup.Tomcat;
 import org.apache.cxf.Bus;
 import org.apache.cxf.configuration.Configurer;
 import org.apache.cxf.configuration.jsse.TLSServerParameters;
@@ -11,7 +9,6 @@ import org.apache.cxf.helpers.CastUtils;
 import org.apache.cxf.helpers.IOUtils;
 import org.apache.cxf.management.InstrumentationManager;
 import org.apache.cxf.testutil.common.TestUtil;
-import org.apache.tomcat.util.descriptor.web.ContextHandler;
 import org.easymock.EasyMock;
 import org.easymock.IMocksControl;
 import org.junit.After;
@@ -19,8 +16,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 import javax.management.ObjectName;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLSession;
 import javax.servlet.Filter;
-import javax.servlet.ServletContext;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.lang.management.ManagementFactory;
@@ -28,7 +27,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -77,6 +75,7 @@ public class TomcatHTTPServerEngineTest {
     @Test
     public void testCreateServer() {
         TomcatHTTPServerEngine serverEngine = new TomcatHTTPServerEngine(8080);
+        assertNotNull("Server engine constructor failed", serverEngine);
     }
 
 
@@ -101,10 +100,7 @@ public class TomcatHTTPServerEngineTest {
         String response = null;
         response = getResponse(urlStr);
         assertEquals("The tomcat http handler did not take effect", response, "Using test handler");
-        System.out.println(response);
 
-
-        // todo add more assertions
         try {
             serverEngine.addServant(new URL(urlStr), testHandler2);
             fail("We don't support to publish the two service at the same context path");
@@ -144,10 +140,10 @@ public class TomcatHTTPServerEngineTest {
 //        response = getResponse(urlStr2);
 //        assertEquals("The tomcat http handler did not take effect", response, "string2");
 
-/*        Set<ObjectName> s = CastUtils.cast(ManagementFactory.getPlatformMBeanServer().
-                queryNames(new ObjectName("org.eclipse.jetty.server:type=server,*"), null));
-                //queryNames(new ObjectName("org.eclipse.tomcat.server:type=server,*"), null));
-        assertEquals("Could not find 1 Tomcat Server: " + s, 1, s.size());*/
+        Set<ObjectName> s = CastUtils.cast(ManagementFactory.getPlatformMBeanServer().
+                //queryNames(new ObjectName("org.eclipse.jetty.server:type=server,*"), null));
+                queryNames(new ObjectName("Tomcat:type=Server"), null));
+        assertEquals("Could not find 1 Tomcat Server: " + s, 1, s.size());
 
         response = getResponse(urlStr);
         assertEquals("The tomcat http handler failed after adding a second servlet", response,
@@ -162,11 +158,9 @@ public class TomcatHTTPServerEngineTest {
         assertEquals(testHandler2, handler);
 
         //serverEngine.shutdown();
-        response = getResponse(urlStr2);
-        assertEquals("The tomcat http handler did not take effect", response, "string2");
+//        response = getResponse(urlStr2);
+//        assertEquals("The tomcat http handler did not take effect", response, "string2");
 
-        /*Thread.sleep(1000);
-        serverEngine.stop();*/
     }
 
     /**
@@ -190,6 +184,7 @@ public class TomcatHTTPServerEngineTest {
 
     @Test
     public void testSetHandlers() throws Exception {
+        //TODO Ivan, is this test needed?
         fail("Test not needed?!");
         URL url = new URL("http://localhost:" + PORT2 + "/hello/test");
         TomcatHTTPTestHandler handler1 = new TomcatHTTPTestHandler("string1", true);
@@ -215,6 +210,7 @@ public class TomcatHTTPServerEngineTest {
 
     @Test
     public void testGetContextHandler() throws Exception {
+        //TODO Ivan, is this test needed?
         fail("Test not needed?!");
 
         String urlStr = "http://localhost:" + PORT1 + "/hello/test";
@@ -360,13 +356,14 @@ public class TomcatHTTPServerEngineTest {
         engine.addServant(new URL(urlStr), handler1);
 
         Set<ObjectName> s = CastUtils.cast(ManagementFactory.getPlatformMBeanServer().
-                queryNames(new ObjectName("org.xnio:type=Xnio,provider=\"nio\""), null));
+                //queryNames(new ObjectName("org.xnio:type=Xnio,provider=\"nio\""), null));
+                queryNames(new ObjectName("Tomcat:type=Server,*"), null));
         assertEquals("Could not find 1 Tomcat Server: " + s, 1, s.size());
 
         engine2.addServant(new URL(urlStr2), handler2);
 
         s = CastUtils.cast(ManagementFactory.getPlatformMBeanServer().
-                queryNames(new ObjectName("org.xnio:type=Xnio,provider=\"nio\",worker=\"*\""), null));
+                queryNames(new ObjectName("Tomcat:type=Server,*"), null));
         assertEquals("Could not find 2 Tomcat Server: " + s, 2, s.size());
 
         engine.removeServant(new URL(urlStr));
@@ -376,20 +373,18 @@ public class TomcatHTTPServerEngineTest {
         engine.shutdown();
 
         s = CastUtils.cast(ManagementFactory.getPlatformMBeanServer().
-                queryNames(new ObjectName("org.xnio:type=Xnio,provider=\"nio\",worker=\"*\""), null));
+                queryNames(new ObjectName("Tomcat:type=Server"), null));
         assertEquals("Could not find 2 Tomcat Server: " + s, 1, s.size());
 
         engine2.shutdown();
 
         s = CastUtils.cast(ManagementFactory.getPlatformMBeanServer().
-                queryNames(new ObjectName("org.xnio:type=Xnio,provider=\"nio\",worker=\"*\""), null));
+                queryNames(new ObjectName("Tomcat:type=Server"), null));
         assertEquals("Could not find 0 Tomcat Server: " + s, 0, s.size());
     }
 
     @Test
     public void testHttps() throws Exception {
-        //fail("Test empty");
-
         String urlStr = "https://localhost:" + PORT1 + "/hello/test";
 
         factory.setTLSServerParametersForPort(PORT1, new TLSServerParameters());
@@ -403,8 +398,6 @@ public class TomcatHTTPServerEngineTest {
         String response = null;
         response = getResponse(urlStr);
         assertEquals("The tomcat http handler failed to connect on https", response, "Testing https settings");
-        System.out.println(response);
-
     }
 
     @Test
@@ -448,8 +441,6 @@ public class TomcatHTTPServerEngineTest {
         String response = null;
         response = getResponse("https://localhost:" + PORT2 + "/test");
         assertEquals("The tomcat http handler failed to connect on https", response, "string1");
-        System.out.println(response);
-
     }
 
     @After
@@ -471,10 +462,24 @@ public class TomcatHTTPServerEngineTest {
 
     private String getResponse(String target) throws Exception {
         URL url = new URL(target);
+        if (url.getProtocol().equalsIgnoreCase("https")) {
+            String keystorePath = System.getProperty("user.dir")+"/src/test/resources/keystore";
+            System.setProperty("javax.net.ssl.trustStore", keystorePath);
+            System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
+        }
 
         URLConnection connection = url.openConnection();
 
         assertTrue(connection instanceof HttpURLConnection);
+        if (connection instanceof HttpsURLConnection) {
+            ((HttpsURLConnection) connection).setHostnameVerifier(new HostnameVerifier() {
+                @Override
+                public boolean verify(String arg0, SSLSession arg1) {
+                    return true;
+                }
+            });
+        }
+
         connection.connect();
         InputStream in = connection.getInputStream();
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -486,10 +491,8 @@ public class TomcatHTTPServerEngineTest {
         try {
             return (int)connector.getClass().getMethod("getAsyncTimeout").invoke(connector);
         } catch (NoSuchMethodException nex) {
-            System.out.println("123123");
+            System.out.println("Tomcat server couldn't invoke the getAsyncTimeout method.");
         }
         return ((Long)connector.getClass().getMethod("getAsyncTimeout").invoke(connector)).intValue();
     }
-
-
 }

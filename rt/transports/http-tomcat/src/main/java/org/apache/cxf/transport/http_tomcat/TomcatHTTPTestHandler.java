@@ -20,8 +20,8 @@
 package org.apache.cxf.transport.http_tomcat;
 
 import org.apache.cxf.transport.http.HttpUrlUtil;
+
 import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
@@ -39,7 +39,7 @@ public class TomcatHTTPTestHandler extends TomcatHTTPHandler {
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse resp, FilterChain chain) throws IOException {
-        System.out.println("In TomcatHTTPTestHandler inside filter method");
+        System.out.println("Inside TomcatHTTPTestHandler doFilter method.");
         if (contextMatchExact) {
             // just return the response for testing
             resp.getOutputStream().write(response.getBytes());
