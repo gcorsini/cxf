@@ -18,6 +18,26 @@
  */
 package org.apache.cxf.transport.http_tomcat;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+
+import javax.servlet.ServletInputStream;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.xml.bind.JAXBElement;
+import javax.xml.namespace.QName;
+
 import org.apache.cxf.Bus;
 import org.apache.cxf.BusException;
 import org.apache.cxf.BusFactory;
@@ -36,7 +56,11 @@ import org.apache.cxf.policy.PolicyDataEngine;
 import org.apache.cxf.security.transport.TLSSessionInfo;
 import org.apache.cxf.service.model.EndpointInfo;
 import org.apache.cxf.service.model.ServiceInfo;
-import org.apache.cxf.transport.*;
+import org.apache.cxf.transport.Conduit;
+import org.apache.cxf.transport.ConduitInitiator;
+import org.apache.cxf.transport.ConduitInitiatorManager;
+import org.apache.cxf.transport.Destination;
+import org.apache.cxf.transport.MessageObserver;
 import org.apache.cxf.transport.http.AbstractHTTPDestination;
 import org.apache.cxf.transport.http.ContinuationProviderFactory;
 import org.apache.cxf.transport.http.DestinationRegistry;
@@ -46,23 +70,19 @@ import org.apache.cxf.ws.addressing.AddressingProperties;
 import org.apache.cxf.ws.addressing.EndpointReferenceType;
 import org.apache.cxf.ws.addressing.EndpointReferenceUtils;
 import org.apache.cxf.ws.addressing.JAXWSAConstants;
+
 import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Test;
 
-import javax.servlet.ServletInputStream;
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.xml.bind.JAXBElement;
-import javax.xml.namespace.QName;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
-import static org.junit.Assert.*;
 
 public class TomcatHttpDestinationTest {
 
@@ -460,7 +480,6 @@ public class TomcatHttpDestinationTest {
     }
 
 
-
     private void setUpInMessage() {
         inMessage.setExchange(new ExchangeImpl());
     }
@@ -576,8 +595,8 @@ public class TomcatHttpDestinationTest {
                 contentType.add("charset=utf8");
                 headers.put("content-type", contentType);
                 headers.put(TomcatHttpDestinationTest.AUTH_HEADER, new ArrayList<String>() {{
-                    add(TomcatHttpDestinationTest.BASIC_AUTH);
-                }});
+                        add(TomcatHttpDestinationTest.BASIC_AUTH);
+                    }});
 
                 List<String> headersNames = new ArrayList<>();
                 for (String header : headers.keySet()) {
@@ -590,7 +609,7 @@ public class TomcatHttpDestinationTest {
 
                 request.getHeaders(TomcatHttpDestinationTest.AUTH_HEADER);
                 EasyMock.expectLastCall().andReturn(
-                        (Collections.enumeration(headers.get(TomcatHttpDestinationTest.AUTH_HEADER))));
+                        Collections.enumeration(headers.get(TomcatHttpDestinationTest.AUTH_HEADER)));
 
                 EasyMock.expect(request.getInputStream()).andReturn(is);
 //                request.setHandled(true);
@@ -678,7 +697,7 @@ public class TomcatHttpDestinationTest {
 
     private void setUpResponseHeaders(Message outMsg) {
         Map<String, List<String>> responseHeaders =
-                CastUtils.cast((Map<?, ?>)outMsg.get(Message.PROTOCOL_HEADERS));
+                CastUtils.cast((Map<?, ?>) outMsg.get(Message.PROTOCOL_HEADERS));
         assertNotNull("expected response headers", responseHeaders);
         List<String> challenges = new ArrayList<>();
         challenges.add(BASIC_CHALLENGE);
@@ -689,7 +708,7 @@ public class TomcatHttpDestinationTest {
 
     private void verifyResponseHeaders(Message outMsg) throws Exception {
         Map<String, List<String>> responseHeaders =
-                CastUtils.cast((Map<?, ?>)outMsg.get(Message.PROTOCOL_HEADERS));
+                CastUtils.cast((Map<?, ?>) outMsg.get(Message.PROTOCOL_HEADERS));
         assertNotNull("expected response headers",
                 responseHeaders);
     }
@@ -721,7 +740,7 @@ public class TomcatHttpDestinationTest {
 
     private void verifyRequestHeaders() throws Exception {
         Map<String, List<String>> requestHeaders =
-                CastUtils.cast((Map<?, ?>)inMessage.get(Message.PROTOCOL_HEADERS));
+                CastUtils.cast((Map<?, ?>) inMessage.get(Message.PROTOCOL_HEADERS));
         assertNotNull("expected request headers",
                 requestHeaders);
         List<String> values = requestHeaders.get("content-type");
@@ -878,9 +897,9 @@ public class TomcatHttpDestinationTest {
 
     private static class TestTomcatDestination extends TomcatHTTPDestination {
         TestTomcatDestination(Bus bus,
-                             DestinationRegistry registry,
-                             EndpointInfo endpointInfo,
-                             TomcatHTTPServerEngineFactory serverEngineFactory) throws IOException {
+                              DestinationRegistry registry,
+                              EndpointInfo endpointInfo,
+                              TomcatHTTPServerEngineFactory serverEngineFactory) throws IOException {
             super(bus, registry, endpointInfo, serverEngineFactory);
         }
 

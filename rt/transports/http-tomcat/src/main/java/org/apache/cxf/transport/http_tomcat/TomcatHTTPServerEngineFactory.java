@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License. You may obtain a copy of the License at
- * <p>
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -18,13 +18,6 @@
  */
 package org.apache.cxf.transport.http_tomcat;
 
-import org.apache.cxf.Bus;
-import org.apache.cxf.buslifecycle.BusLifeCycleListener;
-import org.apache.cxf.buslifecycle.BusLifeCycleManager;
-import org.apache.cxf.common.logging.LogUtils;
-import org.apache.cxf.configuration.jsse.TLSServerParameters;
-
-import javax.annotation.Resource;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.List;
@@ -34,21 +27,19 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.annotation.Resource;
+
+import org.apache.cxf.Bus;
+import org.apache.cxf.buslifecycle.BusLifeCycleListener;
+import org.apache.cxf.buslifecycle.BusLifeCycleManager;
+import org.apache.cxf.common.logging.LogUtils;
+import org.apache.cxf.configuration.jsse.TLSServerParameters;
+
 public class TomcatHTTPServerEngineFactory {
 
     private static final Logger LOG =
             LogUtils.getL7dLogger(TomcatHTTPServerEngineFactory.class);
-
-    private Bus bus;
-    private BusLifeCycleManager lifeCycleManager;
     private static final int FALLBACK_THREADING_PARAMS_KEY = 0;
-
-    /**
-     * This field holds the TLS ServerParameters that are programatically
-     * configured. The tlsServerParamers (due to JAXB) holds the struct
-     * placed by SpringConfig.
-     */
-    private TLSServerParameters tlsServerParameters;
 
     /**
      * This map holds references for allocated ports.
@@ -57,6 +48,16 @@ public class TomcatHTTPServerEngineFactory {
     // in the same JVM
     private static ConcurrentHashMap<Integer, TomcatHTTPServerEngine> portMap =
             new ConcurrentHashMap<>();
+
+    private Bus bus;
+    private BusLifeCycleManager lifeCycleManager;
+
+    /**
+     * This field holds the TLS ServerParameters that are programatically
+     * configured. The tlsServerParamers (due to JAXB) holds the struct
+     * placed by SpringConfig.
+     */
+    private TLSServerParameters tlsServerParameters;
 
     /**
      * This map holds TLS Server Parameters that are to be used to
@@ -123,7 +124,8 @@ public class TomcatHTTPServerEngineFactory {
     private static TomcatHTTPServerEngine getOrCreate(TomcatHTTPServerEngineFactory factory,
                                                       String host,
                                                       int port,
-                                                      TLSServerParameters tlsParams) throws IOException, GeneralSecurityException {
+                                                      TLSServerParameters tlsParams)
+            throws IOException, GeneralSecurityException {
 
         TomcatHTTPServerEngine ref = portMap.get(port);
         if (ref == null) {
@@ -216,7 +218,7 @@ public class TomcatHTTPServerEngineFactory {
      * This call creates a new UndertowHTTPServerEngine initialized for "http"
      * or "https" on the given port. The determination of "http" or "https"
      * will depend on configuration of the engine's bean name.
-     * <p>
+     *
      * If an UndertowHTTPEngine already exists, or the port
      * is already in use, a BindIOException will be thrown. If the
      * engine is being Spring configured for TLS a GeneralSecurityException
@@ -231,10 +233,10 @@ public class TomcatHTTPServerEngineFactory {
      * @throws IOException
      */
     public synchronized TomcatHTTPServerEngine createTomcatHTTPServerEngine(String host, int port,
-                                                                            String protocol) throws GeneralSecurityException, IOException {
+                                                                            String protocol)
+            throws GeneralSecurityException, IOException {
         LOG.fine("Creating Tomcat HTTP Server Engine for port " + port + ".");
         TomcatHTTPServerEngine ref = getOrCreate(this, host, port, null);
-        // checking the protocol
 
         TLSServerParameters tlsParameters = null;
 //        if (id != null && tlsParametersMap != null && tlsParametersMap.containsKey(id)) {

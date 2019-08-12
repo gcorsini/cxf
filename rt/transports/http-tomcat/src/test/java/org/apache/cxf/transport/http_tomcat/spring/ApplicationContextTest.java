@@ -18,6 +18,10 @@
  */
 package org.apache.cxf.transport.http_tomcat.spring;
 
+import javax.xml.namespace.QName;
+
+import org.xml.sax.SAXParseException;
+
 import org.apache.cxf.Bus;
 import org.apache.cxf.BusFactory;
 import org.apache.cxf.configuration.Configurer;
@@ -25,19 +29,26 @@ import org.apache.cxf.configuration.spring.ConfigurerImpl;
 import org.apache.cxf.service.model.EndpointInfo;
 import org.apache.cxf.service.model.ServiceInfo;
 import org.apache.cxf.test.TestApplicationContext;
-import org.apache.cxf.transport.*;
+import org.apache.cxf.transport.ConduitInitiator;
+import org.apache.cxf.transport.ConduitInitiatorManager;
+import org.apache.cxf.transport.Destination;
+import org.apache.cxf.transport.DestinationFactory;
+import org.apache.cxf.transport.DestinationFactoryManager;
 import org.apache.cxf.transport.http.HTTPConduit;
 import org.apache.cxf.transport.http_tomcat.TomcatHTTPDestination;
 import org.apache.cxf.transport.http_tomcat.TomcatHTTPServerEngine;
+import org.springframework.beans.factory.xml.XmlBeanDefinitionStoreException;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.beans.factory.xml.XmlBeanDefinitionStoreException;
-import org.xml.sax.SAXParseException;
 
-import javax.xml.namespace.QName;
 
-import static org.junit.Assert.*;
+import static junit.framework.TestCase.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 
 public class ApplicationContextTest {

@@ -18,10 +18,11 @@
  */
 package org.apache.cxf.transport.http_tomcat.blueprint;
 
+import org.w3c.dom.Element;
+
 import org.apache.aries.blueprint.ParserContext;
 import org.apache.cxf.configuration.blueprint.AbstractBPBeanDefinitionParser;
 import org.osgi.service.blueprint.reflect.Metadata;
-import org.w3c.dom.Element;
 
 public class TomcatServerEngineParser extends AbstractBPBeanDefinitionParser {
 

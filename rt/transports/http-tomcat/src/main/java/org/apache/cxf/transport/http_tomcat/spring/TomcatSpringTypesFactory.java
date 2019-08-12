@@ -18,29 +18,30 @@
  */
 package org.apache.cxf.transport.http_tomcat.spring;
 
-import org.apache.cxf.common.injection.NoJSR250Annotations;
-//import org.apache.cxf.transport.http_tomcat.ThreadingParameters;
-import org.apache.cxf.configuration.jsse.TLSServerParameters;
-import org.apache.cxf.configuration.jsse.TLSServerParametersConfig;
-import org.apache.cxf.transport.http_tomcat.ThreadingParameters;
-import org.apache.cxf.transports.http_tomcat.configuration.TLSServerParametersIdentifiedType;
-import org.apache.cxf.transports.http_tomcat.configuration.ThreadingParametersIdentifiedType;
-import org.apache.cxf.transports.http_tomcat.configuration.ThreadingParametersType;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-
-import org.apache.cxf.staxutils.StaxUtils;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
-import javax.xml.namespace.QName;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
+import javax.xml.namespace.QName;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+
+import org.apache.cxf.common.injection.NoJSR250Annotations;
+import org.apache.cxf.configuration.jsse.TLSServerParameters;
+import org.apache.cxf.configuration.jsse.TLSServerParametersConfig;
+import org.apache.cxf.staxutils.StaxUtils;
+import org.apache.cxf.transport.http_tomcat.ThreadingParameters;
+import org.apache.cxf.transports.http_tomcat.configuration.TLSServerParametersIdentifiedType;
+import org.apache.cxf.transports.http_tomcat.configuration.ThreadingParametersIdentifiedType;
+import org.apache.cxf.transports.http_tomcat.configuration.ThreadingParametersType;
 
 @NoJSR250Annotations
 public final class TomcatSpringTypesFactory {

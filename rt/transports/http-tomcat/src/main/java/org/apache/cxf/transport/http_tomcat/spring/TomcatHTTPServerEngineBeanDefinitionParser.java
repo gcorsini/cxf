@@ -18,12 +18,32 @@
  */
 package org.apache.cxf.transport.http_tomcat.spring;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.util.List;
+
+import javax.annotation.PostConstruct;
+import javax.xml.bind.JAXBContext;
+
+import org.w3c.dom.Attr;
+import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
 
 import org.apache.cxf.Bus;
 import org.apache.cxf.bus.spring.BusWiringBeanFactoryPostProcessor;
 import org.apache.cxf.common.injection.NoJSR250Annotations;
 import org.apache.cxf.configuration.jsse.TLSServerParametersConfig;
-import org.apache.cxf.configuration.security.*;
+import org.apache.cxf.configuration.security.CertificateConstraintsType;
+import org.apache.cxf.configuration.security.CipherSuites;
+import org.apache.cxf.configuration.security.ClientAuthentication;
+import org.apache.cxf.configuration.security.ExcludeProtocols;
+import org.apache.cxf.configuration.security.FiltersType;
+import org.apache.cxf.configuration.security.IncludeProtocols;
+import org.apache.cxf.configuration.security.KeyManagersType;
+import org.apache.cxf.configuration.security.SecureRandomParameters;
+import org.apache.cxf.configuration.security.TLSServerParametersType;
+import org.apache.cxf.configuration.security.TrustManagersType;
 import org.apache.cxf.configuration.spring.AbstractBeanDefinitionParser;
 import org.apache.cxf.helpers.DOMUtils;
 import org.apache.cxf.transport.http_tomcat.ThreadingParameters;
@@ -39,16 +59,6 @@ import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.xml.ParserContext;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-import org.w3c.dom.Attr;
-import org.w3c.dom.Element;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.Node;
-
-import javax.annotation.PostConstruct;
-import javax.xml.bind.JAXBContext;
-import java.io.IOException;
-import java.security.GeneralSecurityException;
-import java.util.List;
 
 
 public class TomcatHTTPServerEngineBeanDefinitionParser extends AbstractBeanDefinitionParser {
@@ -89,8 +99,7 @@ public class TomcatHTTPServerEngineBeanDefinitionParser extends AbstractBeanDefi
                 String name = elem.getLocalName();
                 if ("tlsServerParameters".equals(name)) {
                     mapTLSServerParameters(elem, bean);
-                }
-                else if ("threadingParameters".equals(name)) {
+                } else if ("threadingParameters".equals(name)) {
                     mapElementToJaxbPropertyFactory(elem,
                                                     bean,
                                                     "threadingParameters",
@@ -112,8 +121,7 @@ public class TomcatHTTPServerEngineBeanDefinitionParser extends AbstractBeanDefi
                                                     TomcatHTTPServerEngineBeanDefinitionParser.class,
                                                     "createThreadingParametersRef"
                                                     );
-                }
-                else if ("connector".equals(name)) {
+                } else if ("connector".equals(name)) {
                     // only deal with the one connector here
                     List<?> list =
                         ctx.getDelegate().parseListElement(elem, bean.getBeanDefinition());

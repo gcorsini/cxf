@@ -19,12 +19,30 @@
 
 package org.apache.cxf.transport.http_tomcat.osgi;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.util.Dictionary;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.StringTokenizer;
+
+import javax.management.MBeanServer;
+
 import org.apache.cxf.bus.blueprint.BlueprintNameSpaceHandlerFactory;
 import org.apache.cxf.bus.blueprint.NamespaceHandlerRegisterer;
 import org.apache.cxf.common.util.CollectionUtils;
 import org.apache.cxf.configuration.jsse.TLSParameterJaxBUtils;
 import org.apache.cxf.configuration.jsse.TLSServerParameters;
-import org.apache.cxf.configuration.security.*;
+import org.apache.cxf.configuration.security.CertStoreType;
+import org.apache.cxf.configuration.security.CertificateConstraintsType;
+import org.apache.cxf.configuration.security.ClientAuthentication;
+import org.apache.cxf.configuration.security.CombinatorType;
+import org.apache.cxf.configuration.security.DNConstraintsType;
+import org.apache.cxf.configuration.security.FiltersType;
+import org.apache.cxf.configuration.security.KeyManagersType;
+import org.apache.cxf.configuration.security.KeyStoreType;
+import org.apache.cxf.configuration.security.SecureRandomParameters;
+import org.apache.cxf.configuration.security.TrustManagersType;
 import org.apache.cxf.transport.http_tomcat.ThreadingParameters;
 import org.apache.cxf.transport.http_tomcat.TomcatHTTPServerEngine;
 import org.apache.cxf.transport.http_tomcat.TomcatHTTPServerEngineFactory;
@@ -36,14 +54,6 @@ import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.cm.ConfigurationException;
 import org.osgi.service.cm.ManagedServiceFactory;
 import org.osgi.util.tracker.ServiceTracker;
-
-import javax.management.MBeanServer;
-import java.io.IOException;
-import java.security.GeneralSecurityException;
-import java.util.Dictionary;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.StringTokenizer;
 
 public class HTTPTomcatTransportActivator
     implements BundleActivator, ManagedServiceFactory {

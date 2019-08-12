@@ -21,9 +21,9 @@
     xmlns:beans="http://www.springframework.org/schema/beans"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xmlns:h="http://cxf.apache.org/transports/http/configuration"
-    xmlns:hj="http://cxf.apache.org/transports/http-jetty/configuration"
+    xmlns:hj="http://cxf.apache.org/transports/http-tomcat/configuration"
     xmlns:sec="http://cxf.apache.org/configuration/security"
-    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://cxf.apache.org/configuration/security http://cxf.apache.org/schemas/configuration/security.xsd http://cxf.apache.org/transports/http/configuration http://cxf.apache.org/schemas/configuration/http-conf.xsd http://cxf.apache.org/transports/http-jetty/configuration http://cxf.apache.org/schemas/configuration/http-jetty.xsd">
+    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://cxf.apache.org/configuration/security http://cxf.apache.org/schemas/configuration/security.xsd http://cxf.apache.org/transports/http/configuration http://cxf.apache.org/schemas/configuration/http-conf.xsd http://cxf.apache.org/transports/http-tomcat/configuration http://cxf.apache.org/schemas/configuration/http-tomcat.xsd">
     <bean id="placeholderConfig" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
         <property name="location" value="org/apache/cxf/transport/http_tomcat/spring/bean.properties"/>
     </bean>
@@ -53,7 +53,7 @@
             </hj:tlsServerParameters>
         </hj:identifiedTLSServerParameters>
         <hj:identifiedThreadingParameters id="sampleThreading1">
-            <hj:threadingParameters minThreads="111" maxThreads="120" threadNamePrefix="TestPrefix"/>
+            <hj:threadingParameters minThreads="111" maxThreads="120" />
         </hj:identifiedThreadingParameters>
         <hj:engine port="${engine.port.nine.zero}">
             <hj:threadingParametersRef id="sampleThreading1"/>
@@ -61,13 +61,12 @@
         <hj:engine port="#[engine.port.zero]">
             <hj:threadingParameters minThreads="${engine.port.zero.minThreads}" maxThreads="${engine.port.zero.maxThreads}"/>
         </hj:engine>
-        <hj:engine port="$(engine.port.nine.one)" maxIdleTime="$(engine.port.nine.one.maxIdle)" sendServerVersion="$(engine.port.nine.one.sendServerVersion)">
-            <hj:threadingParameters minThreads="${engine.port.nine.one.minThreads}" maxThreads="${engine.port.nine.one.maxThreads}" threadNamePrefix="${engine.port.nine.one.threadNamePrefix}"/>
+        <hj:engine port="$(engine.port.nine.one)" maxIdleTime="$(engine.port.nine.one.maxIdle)">
+            <hj:threadingParameters minThreads="${engine.port.nine.one.minThreads}" maxThreads="${engine.port.nine.one.maxThreads}"/>
             <hj:handlers>
-                <beans:bean class="org.eclipse.tomcat.server.handler.DefaultHandler"/>
+                <beans:bean class="org.apache.cxf.transport.http_tomcat.TomcatHTTPHandler"/>
+                <!--org.eclipse.tomcat.server.handler.DefaultHandler-->
             </hj:handlers>
-            <hj:sessionSupport>true</hj:sessionSupport>
-            <hj:sessionTimeout>600</hj:sessionTimeout>
         </hj:engine>
         <hj:engine port="${engine.port.nine.two}">
             <hj:tlsServerParameters>

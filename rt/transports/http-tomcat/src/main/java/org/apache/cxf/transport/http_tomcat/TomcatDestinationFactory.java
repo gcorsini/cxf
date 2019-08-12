@@ -18,14 +18,14 @@
  */
 package org.apache.cxf.transport.http_tomcat;
 
+import java.io.IOException;
+
 import org.apache.cxf.Bus;
 import org.apache.cxf.common.injection.NoJSR250Annotations;
 import org.apache.cxf.service.model.EndpointInfo;
 import org.apache.cxf.transport.http.AbstractHTTPDestination;
 import org.apache.cxf.transport.http.DestinationRegistry;
 import org.apache.cxf.transport.http.HttpDestinationFactory;
-
-import java.io.IOException;
 
 @NoJSR250Annotations()
 public class TomcatDestinationFactory implements HttpDestinationFactory {

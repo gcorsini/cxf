@@ -18,6 +18,12 @@
  */
 package org.apache.cxf.transport.http_tomcat.blueprint;
 
+import java.util.List;
+import java.util.StringTokenizer;
+import java.util.UUID;
+
+import org.w3c.dom.Element;
+
 import org.apache.aries.blueprint.ParserContext;
 import org.apache.aries.blueprint.mutable.MutableBeanMetadata;
 import org.apache.aries.blueprint.mutable.MutableMapMetadata;
@@ -28,11 +34,6 @@ import org.apache.cxf.staxutils.StaxUtils;
 import org.osgi.service.blueprint.reflect.ComponentMetadata;
 import org.osgi.service.blueprint.reflect.Metadata;
 import org.osgi.service.blueprint.reflect.ValueMetadata;
-import org.w3c.dom.Element;
-
-import java.util.List;
-import java.util.StringTokenizer;
-import java.util.UUID;
 
 public class TomcatServerEngineFactoryParser extends AbstractBPBeanDefinitionParser {
 

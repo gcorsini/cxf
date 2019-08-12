@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License. You may obtain a copy of the License at
- * <p>
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -17,6 +17,19 @@
  * under the License.
  */
 package org.apache.cxf.transport.http_tomcat;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.security.GeneralSecurityException;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.annotation.PostConstruct;
+import javax.servlet.Filter;
 
 import org.apache.catalina.Context;
 import org.apache.catalina.LifecycleException;
@@ -37,24 +50,11 @@ import org.apache.tomcat.util.descriptor.web.FilterDef;
 import org.apache.tomcat.util.descriptor.web.FilterMap;
 import org.apache.tomcat.util.net.SSLHostConfig;
 
-import javax.annotation.PostConstruct;
-import javax.servlet.Filter;
-import java.io.File;
-import java.io.IOException;
-import java.net.URL;
-import java.security.GeneralSecurityException;
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 public class TomcatHTTPServerEngine implements ServerEngine {
 
     public static final String DO_NOT_CHECK_URL_PROP = "org.apache.cxf.transports.http_tomcat.DontCheckUrl";
 
     private static final Logger LOG = LogUtils.getL7dLogger(TomcatHTTPServerEngine.class);
-
 
     /**
      * This is the network port for which this engine is allocated.
@@ -66,7 +66,6 @@ public class TomcatHTTPServerEngine implements ServerEngine {
      * enabled, i.e. "http" or "https".
      */
     private String protocol = "http";
-
     private Boolean isSessionSupport = false;
     private int sessionTimeout = -1;
     private Boolean isReuseAddress = true;
@@ -148,7 +147,7 @@ public class TomcatHTTPServerEngine implements ServerEngine {
                 connector = new Connector("org.apache.coyote.http11.Http11NioProtocol");
                 connector.setPort(getPort());
 
-                Http11NioProtocol protocol = (Http11NioProtocol) connector.getProtocolHandler();
+                Http11NioProtocol nioProtocol = (Http11NioProtocol) connector.getProtocolHandler();
                 if (tlsServerParameters != null) {
                     // TODO: use the tlsServerParameters instead of fake default values
 /*                    // get desired protocol
@@ -169,7 +168,8 @@ public class TomcatHTTPServerEngine implements ServerEngine {
                             : SSLContext.getInstance(proto, tlsServerParameters.getJsseProvider());
 
                     KeyManager[] keyManagers = tlsServerParameters.getKeyManagers();
-                    KeyManager[] configuredKeyManagers = org.apache.cxf.transport.https.SSLUtils.configureKeyManagersWithCertAlias(
+                    KeyManager[] configuredKeyManagers =
+                            org.apache.cxf.transport.https.SSLUtils.configureKeyManagersWithCertAlias(
                             tlsServerParameters, keyManagers);
 
                     context.init(configuredKeyManagers,
@@ -202,13 +202,13 @@ public class TomcatHTTPServerEngine implements ServerEngine {
                     SSLHostConfig sslHostConfig = new SSLHostConfig();
                     sslHostConfig.setCertificateKeyAlias("tomcat");
 
-                    String keystorePath = System.getProperty("user.dir")+"/src/test/resources/keystore";
+                    String keystorePath = System.getProperty("user.dir") + "/src/test/resources/keystore";
                     sslHostConfig.setCertificateKeystoreFile(keystorePath);
                     sslHostConfig.setCertificateKeystorePassword("changeit");
 
                     connector.setScheme("https");
                     connector.setSecure(true);
-                    protocol.setSSLEnabled(true);
+                    nioProtocol.setSSLEnabled(true);
                     connector.addSslHostConfig(sslHostConfig);
                 }
 
@@ -277,12 +277,12 @@ public class TomcatHTTPServerEngine implements ServerEngine {
         //File docBase = new File(System.getProperty("java.io.tmpdir"));
         String contextName = HttpUriMapper.getContextName(url.getPath());
         // TODO: Ivan, should we just create a tmp dir for the server or for each context?
-        File docBase = createTempDir(server.getHost().getName()+contextName);
+        File docBase = createTempDir(server.getHost().getName() + contextName);
 
         Context context = server.addContext(contextName, docBase.getAbsolutePath());
 
         // Get servlet name from handler by replacing "/" with "_" if they exist (as name is often link)
-        String servletName = handler.getName().replaceFirst("/","").replace("/", "_");
+        String servletName = handler.getName().replaceFirst("/", "").replace("/", "_");
 
         Class filterClass = handler.getClass();
         String filterName = filterClass.getName();
@@ -299,7 +299,6 @@ public class TomcatHTTPServerEngine implements ServerEngine {
         map.addURLPattern(urlPattern);
         context.addFilterMap(map);
 
-        //Tomcat.addServlet(context, servletName, new CxfTomcatServlet());
         server.addServlet(context, servletName, new CxfTomcatServlet());
         context.addServletMappingDecoded(urlPattern, servletName);
 
@@ -308,7 +307,7 @@ public class TomcatHTTPServerEngine implements ServerEngine {
     }
 
     private void startDaemonAwaitThread() {
-        Thread awaitThread = new Thread("container-" + (1)) {
+        Thread awaitThread = new Thread("container-" + 1) {
             @Override
             public void run() {
                 server.getServer().await();
@@ -453,7 +452,7 @@ public class TomcatHTTPServerEngine implements ServerEngine {
     private void checkConnectorPort() throws IOException {
         try {
             if (null != connector) {
-                int cp = (connector).getPort();
+                int cp = connector.getPort();
                 if (port != cp) {
                     throw new IOException("Error: Connector port " + cp + " does not match"
                             + " with the server engine port " + port);

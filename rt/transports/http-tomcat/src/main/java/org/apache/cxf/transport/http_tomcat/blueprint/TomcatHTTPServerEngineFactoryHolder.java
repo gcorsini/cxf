@@ -18,6 +18,22 @@
  */
 package org.apache.cxf.transport.http_tomcat.blueprint;
 
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.logging.Logger;
+
+import javax.servlet.Filter;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
+
+import org.w3c.dom.Element;
+
 import org.apache.cxf.common.jaxb.JAXBContextCache;
 import org.apache.cxf.common.jaxb.JAXBUtils;
 import org.apache.cxf.common.logging.LogUtils;
@@ -27,20 +43,13 @@ import org.apache.cxf.configuration.jsse.TLSServerParameters;
 import org.apache.cxf.configuration.jsse.TLSServerParametersConfig;
 import org.apache.cxf.staxutils.StaxUtils;
 import org.apache.cxf.transport.http_tomcat.ThreadingParameters;
-import org.apache.cxf.transport.http_tomcat.TomcatHTTPHandler;
 import org.apache.cxf.transport.http_tomcat.TomcatHTTPServerEngine;
 import org.apache.cxf.transport.http_tomcat.TomcatHTTPServerEngineFactory;
-import org.apache.cxf.transports.http_tomcat.configuration.*;
-import org.w3c.dom.Element;
-
-import javax.servlet.Filter;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
-import java.io.StringReader;
-import java.util.*;
-import java.util.logging.Handler;
-import java.util.logging.Logger;
+import org.apache.cxf.transports.http_tomcat.configuration.TLSServerParametersIdentifiedType;
+import org.apache.cxf.transports.http_tomcat.configuration.ThreadingParametersIdentifiedType;
+import org.apache.cxf.transports.http_tomcat.configuration.ThreadingParametersType;
+import org.apache.cxf.transports.http_tomcat.configuration.TomcatHTTPServerEngineConfigType;
+import org.apache.cxf.transports.http_tomcat.configuration.TomcatHTTPServerEngineFactoryConfigType;
 
 
 public class TomcatHTTPServerEngineFactoryHolder {

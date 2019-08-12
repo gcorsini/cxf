@@ -18,19 +18,20 @@
  */
 package org.apache.cxf.transport.http_tomcat.blueprint;
 
+import java.net.URL;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+
 import org.apache.aries.blueprint.NamespaceHandler;
 import org.apache.aries.blueprint.Namespaces;
 import org.apache.aries.blueprint.ParserContext;
 import org.apache.cxf.common.logging.LogUtils;
 import org.osgi.service.blueprint.reflect.ComponentMetadata;
 import org.osgi.service.blueprint.reflect.Metadata;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-
-import java.net.URL;
-import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 @Namespaces("http://cxf.apache.org/transports/http-tomcat/configuration")
 public class HTTPTomcatTransportNamespaceHandler implements NamespaceHandler {

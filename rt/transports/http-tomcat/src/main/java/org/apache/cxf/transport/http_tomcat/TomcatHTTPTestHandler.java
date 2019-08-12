@@ -19,13 +19,14 @@
 
 package org.apache.cxf.transport.http_tomcat;
 
-import org.apache.cxf.transport.http.HttpUrlUtil;
+import java.io.IOException;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
+
+import org.apache.cxf.transport.http.HttpUrlUtil;
 
 public class TomcatHTTPTestHandler extends TomcatHTTPHandler {
     private boolean contextMatchExact;
